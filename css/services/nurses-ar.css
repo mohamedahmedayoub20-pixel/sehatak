@@ -1,0 +1,842 @@
+/**تعريف المتغيرات العامة*/
+:root {
+    --primary-blue: #0066cc;
+    --hover-blue: #0052a3;
+    --light-bg: #f5f7fa;
+    --gray-text: #4a5568;
+    --border-color: #e2e8f0;
+}
+/*اعادة تعين القيم الافتراضية لجميع العناصر*/
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+/*تنسيق جسم الصفحة*/
+body {
+    font-family: 'Tajawal', sans-serif;
+    background-color: var(--light-bg);
+    direction: rtl;
+    color: #1e293b;
+    min-height: 100vh;
+}
+
+/*تأكيد ظهور وإخفاء الصفحات الرئيسية و الملف الشخصي*/
+#homePage {
+    display: block;
+}
+
+#profilePage {
+    display: none;
+}
+
+/*تنسيقات الصفحة الرئيسية*/
+/*راس الصفحة*/
+header {
+    background: white;
+    padding: 20px 5%;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    width: 100%;
+}
+/*رابط العودة(خاص ب العودة للرئيسية)*/
+.back-link {
+    display: block;
+    text-align: right;
+    font-size: 1.2rem;
+    color: var(--primary-blue);
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+/*عند المرور لينك يتحول لازرق و تحتوا خط*/
+.back-link:hover {
+    text-decoration: underline;
+}
+/*دائرة الايقونة (مثل ايقونة المريض)*/
+.icon-circle {
+    background: #e0f2fe;
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-size: 2rem;
+}
+/*العناوين*/
+h1 {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+}
+.hero p {
+    /*color: var(--gray-text);*/
+    font-size: 1rem;
+}
+/*حقل البحث*/
+.search-container {
+    position: relative;
+    max-width: 600px;
+    /*margin: 20px auto;*/
+    width: 95%;
+}
+/*حقل البحث*/
+#searchInput {
+    width: 100%;
+    padding: 20px 55px 20px 20px;
+    border-radius: 40px;
+    border: 1px solid var(--border-color);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1rem;
+    background: white;
+}
+/*حقل البحث*/
+.search-icon {
+    position: absolute;
+    right: 20px;
+    top: 14px;
+    font-size: 1.3rem;
+    color: var(--primary-blue);
+}
+/*ازرار التصيفية(تصفية الممرضات)*/
+.filters {
+    padding: 20px 5%;
+    width: 100%;
+}
+/*ازرار التصيفية(تصفية الممرضات)*/
+.filters h3 {
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+/*ازرار التصيفية(حاوية لزر)*/
+.filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+}
+/*ازرار التصيفية(الزر)*/
+.filter-btn {
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: 1px solid var(--border-color);
+    background: white;
+    cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    transition: 0.2s;
+    font-size: 0.9rem;
+    flex: 0 1 auto;
+}
+/*ازرار التصيفية(تصفية الممرضات)*/
+.filter-btn:hover {
+    background: #f0f5ff;
+    border-color: var(--border-color);
+}
+/*ازرار التصيفية(تصفية الممرضات)*/
+.filter-btn.active {
+    background: var(--primary-blue);
+    color: white;
+    border-color: var(--primary-blue);
+}
+/*بطاقة الممرضة*/
+.nurse-card {
+    background: white;
+    border-radius: 15px;
+    padding: 35px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    transition: all 0.25s ease;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+/*بطاقة الممرضة*/
+.nurse-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px -8px rgba(0, 102, 204, 0.15);
+    border-color: var(--border-color);
+}
+/*اجزاء البطاقة(الصورة)*/
+.image-side {
+    flex-shrink: 0;
+}
+/*اجزاء البطاقة (الصورة)*/
+.image-side img {
+    width: 120px;
+    height: 140px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 3px solid #edf2f7;
+    transition: 0.2s;
+}
+/*اجزاء البطاقة (الصورة)*/
+.nurse-card:hover .image-side img {
+    border-color:#edf2f7;
+}
+/*قسم التفاصيل*/
+.details-side {
+    flex: 1;
+    padding: 0 20px;
+}
+
+.details-side h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 3px;
+}
+/*قسم التفاصيل(التخصص)*/
+.spec {
+    color: var(--primary-blue);
+    font-weight: 600;
+    margin: 3px 0;
+    font-size: 0.95rem;
+}
+/*قسم التفاصيل(خاص بالتقيم)*/
+.rating {
+    color: #fbbf24;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+/*قسم التفاصيل(عدد التقيمات)*/
+.rev-count {
+    color: #64748b;
+    margin-right: 5px;
+    font-size: 0.85rem;
+}
+/*قسم التفاصيل(الموقع/سنوات الخبرة)*/
+.meta {
+    font-size: 0.85rem;
+    color: #475569;
+    margin: 6px 0;
+}
+/*قسم التفاصيل(حالة السعر)*/
+.price-status {
+    color: #10b981;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+/*قسم التفاصيل(عرض السعر)*/
+.price {
+    font-weight: 700;
+    color: #0f172a;
+    background: #f1f5f9;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+}
+/*قسم الازرار*/
+.actions-side {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 120px;
+}
+/*قسم الازرار(ازرق بالكامل)*/
+.btn-book {
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    transition: 0.3s;
+    font-size: 0.9rem;
+}
+/*قسم الازرار(تغميق عند التمرير)*/
+.btn-book:hover {
+    background: var(--hover-blue);
+}
+/*قسم الازرار (خلفية/حدود)*/
+.btn-profile {
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #334155;
+    font-family: 'Tajawal', sans-serif;
+    transition: 0.2s;
+    font-size: 0.9rem;
+}
+/*قسم الازرار (خلفية/حدود)*/
+/*عند التمرير علي الزر يتحول لونة*/
+.btn-profile:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    background: white;
+}
+
+/* تنسيقات صفحة الملف الشخصي*/
+body.profile-mode {
+    background: white;
+}
+/*الحاوية الرئيسية(خلفية بيضة كاملة لشاشة)*/
+#profilePage {
+    width: 100%;
+    min-height: 100vh;
+    background: white;
+    padding: 20px;
+}
+/*الحاوية الرئيسية(الصندوق الابيض)*/
+.profile-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+    width: 100%;
+}
+/*راس الملف الشخصي(صورة الممرض بشكل دائرة)*/
+.profile-header {
+    text-align: center;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+}
+/*راس الملف الشخصي*/
+.profile-image-large {
+    width: 90px;
+    height: 100px;
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    overflow: hidden;/*قص اي زيادة ف الصورة*/
+    border: 3px solid var(--primary-blue);
+}
+/*راس الملف الشخصي*/
+.profile-image-large img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;/*ملء الدائرة بدون تشوة*/
+}
+/*راس الملف الشخصي*/
+.profile-header h2 {
+    font-size: 1.6rem;
+    margin-bottom: 5px;
+}
+/* راس الملف الشخصي(اشارة التخصص)*/
+.specialty-badge {
+    color: var(--primary-blue);
+    font-weight: 600;
+    font-size: 1rem;
+    background: #f0f5ff;
+    padding: 4px 15px;
+    border-radius: 20px;
+    display: inline-block;
+}
+/*معلومات الملف الشخصي*/
+.profile-info {
+    background: #f8fafc;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid var(--border-color);
+}
+/*معلومات الملف الشخصي(كل معلومة ف صف)*/
+.info-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--border-color);
+}
+/*الصفوف*/
+.info-row:last-child {
+    border-bottom: none;
+}
+/*معلومات الملف الشخصي*/
+/*العمود ف الجدول*/
+.info-label {
+    font-size: 1.3rem;
+    min-width: 45px;
+    text-align: center;
+}
+/*معلومات الملف الشخصي*/
+/*النص الوصفي*/
+.info-value {
+    font-size: 1rem;
+    color: #1e293b;
+    font-weight: 500;
+}
+/*معلومات الملف الشخصي*/
+/*محاذة رقم الهاتف*/
+.info-value.phone {
+    direction: ltr;
+    text-align: left;
+    color: var(--primary-blue);
+    font-weight: 600;
+}
+/*معلومات الملف الشخصي*/
+/*السعر باللون الاخضر*/
+.info-value.price {
+    color: #10b981;
+    font-weight: 700;
+}
+/*جدول المواعيد*/
+.schedule-section {
+    margin-bottom: 25px;
+}
+/*جدول المواعيد*/
+.schedule-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    font-weight: 600;
+    text-align: center;
+}
+/*جدول المواعيد*/
+/*ترتيب المواعيد*/
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+/*جدول المواعيد*/
+/*الايقونة*/
+.schedule-item {
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px 5px;
+    text-align: center;
+    transition: 0.2s;
+}
+/*جدول المواعيد*/
+/*عند التمرير علي الجدول اللون يتغير*/
+.schedule-item:hover {
+    border-color: var(--primary-blue);
+    background: white;
+}
+/*جدول المواعيد*/
+/*اليوم*/
+.schedule-day {
+    font-weight: 700;
+    color: var(--primary-blue);
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+}
+/*جدول المواعيد*/
+/*التاريخ*/
+.schedule-date {
+    color: #475569;
+    font-size: 0.85rem;
+    margin-bottom: 3px;
+}
+/*جدول المواعيد*/
+/*الوقت*/
+.schedule-time {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 0.85rem;
+}
+/*ازرار الاجراءات في الملف الشخصي*/
+.profile-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 25px;
+}
+/*ازرار الاجراءات في الملف الشخصي*/
+/*زر العودة*/
+.btn-back {
+    background: white;
+    color: var(--primary-blue);
+    border: 2px solid var(--primary-blue);
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    transition: 0.2s;
+    flex: 1;
+    max-width: 150px;/*لمنع الاتساع المفرط*/
+    font-size: 1rem;
+}
+/*ازرار الاجراءات في الملف الشخصي*/
+/*تاثير الماوس ع زر العودة*/
+.btn-back:hover {
+    background: #f0f5ff;
+}
+/*ازرار الاجراءات في الملف الشخصي*/
+/*زر الحجز حجز*/
+.btn-book-large {
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    transition: 0.2s;
+    flex: 1;
+    max-width: 150px;
+    font-size: 1rem;
+}
+/*ازرار الاجراءات في الملف الشخصي*/
+/*تاثير الماوس ع زر الحجز*/
+.btn-book-large:hover {
+    background: var(--hover-blue);
+}
+/*  تعديل زر إلغاء الحجز إلى اللون الأحمر */
+/* استهداف الزر الثالث داخل .profile-actions (العودة، حجز، إلغاء) */
+.profile-actions .btn-book-large:nth-child(3) {
+    background: #dc2626; /* أحمر */
+    border: none;
+}
+
+.profile-actions .btn-book-large:nth-child(3):hover {
+    background: #b91c1c; /* أحمر داكن عند المرور */
+}
+
+/*  (اختياري) تحسين مظهر الأزرار في الملف الشخصي */
+.profile-actions {
+    gap: 15px; /* زيادة المسافة قليلاً */
+}
+/*تنسيقات الشاشات الصغيرة*/
+@media (max-width: 768px) {
+    .nurse-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 18px;
+    }
+    /*العرض بالكامل*/
+    .details-side {
+        padding: 15px 0;
+        width: 100%;
+    }
+    /*مساحة عمودية*/
+    .actions-side {
+        width: 100%;
+        flex-direction: row;
+        gap: 12px;
+    }
+
+    .btn-book, .btn-profile {
+        flex: 1;
+    }
+    /*توسيط الازرار*/
+    .filter-buttons {
+        justify-content: center;
+    }
+    /*تقليل عدد الاعمدة*/
+    .schedule-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .profile-container {
+        padding: 15px;
+    }
+    /*تغير حجم الخط*/
+    .profile-header h2 {
+        font-size: 1.3rem;
+    }
+}
+    /*الهواتف الصغيرة*/
+@media (max-width: 480px) {
+    .schedule-grid {/*عمود واحد*/
+        grid-template-columns: 1fr;
+    }
+    /*ترتيب عمودي*/
+    .actions-side {
+        flex-direction: column;
+    }
+    /*توسيط العناصر*/
+    .profile-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    /*العرض بالكامل*/
+    .btn-back, .btn-book-large {
+        max-width: 100%;
+        width: 100%;
+    }
+}
+
+/* ============= تنسيقات بوت المحادثة ============= */
+/* الحاوية الرئيسية للبوت، مثبتة في أسفل يسار الشاشة */
+.chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    font-family: 'Tajawal', sans-serif;
+}
+
+/* أيقونة البوت (الدائرة الزرقاء) - تم جعلها relative لاستيعاب الـ Badge */
+.chat-icon {
+    position: relative;  /* ضروري لتمركز الـ Badge بشكل مطلق داخلها */
+    width: 60px;
+    height: 60px;
+    background-color: var(--primary-blue);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,102,204,0.3);
+    transition: transform 0.2s;
+}
+
+/* تأثير تكبير الأيقونة عند المرور بالماوس */
+.chat-icon:hover {
+    transform: scale(1.1);
+}
+
+/* تنسيق علامة الإشعار (Badge) */
+.badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: red;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translate(25%, -25%); /* لضبط الموقع */
+    border: 2px solid white;
+}
+
+/* نافذة المحادثة - تظهر فوق الأيقونة */
+.chat-window {
+    position: absolute;
+    bottom: 80px;
+    left: 0;
+    width: 320px;
+    height: 450px;
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+    display: none; /* مخفية افتراضياً، تظهر عند النقر */
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+/* رأس نافذة المحادثة */
+.chat-header {
+    background-color: var(--primary-blue);
+    color: white;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+}
+
+/* زر إغلاق نافذة المحادثة */
+.close-chat {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+/* منطقة عرض الرسائل (قابلة للتمرير) */
+.chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #f9f9f9;
+}
+
+/* تنسيق عام لأي رسالة (مستخدم أو بوت) */
+.message {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    word-wrap: break-word;
+    font-size: 0.95rem;
+}
+
+/* رسالة المستخدم - زرقاء ومحاذاة لليسار (في RTL تعني جهة المستخدم) */
+.user-message {
+    align-self: flex-start;
+    background-color: var(--primary-blue);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+/* رسالة البوت - رمادية ومحاذاة لليمين (في RTL تعني جهة البوت) */
+.bot-message {
+    align-self: flex-end;
+    background-color: #e9eef3;
+    color: #1e293b;
+    border-bottom-left-radius: 4px;
+}
+
+/* منطقة إدخال النص والزر */
+.chat-input-area {
+    display: flex;
+    border-top: 1px solid var(--border-color);
+    padding: 10px;
+    background: white;
+}
+
+/* حقل إدخال النص */
+.chat-input-area input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    font-family: 'Tajawal', sans-serif;
+    outline: none;
+}
+
+/* زر الإرسال */
+.chat-input-area button {
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 15px;
+    margin-right: 8px;
+    cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 600;
+}
+
+/* تأثير المرور على زر الإرسال */
+.chat-input-area button:hover {
+    background-color: var(--hover-blue);
+}
+
+/* تحسينات للشاشات الصغيرة جداً */
+@media (max-width: 480px) {
+    .chat-window {
+        width: 280px;
+        left: -20px;  /* لتوسيط النافذة قليلاً */
+        bottom: 70px;
+    }
+}
+
+
+/* ========= أنماط نافذة الفاتورة المنبثقة (Modal) ========= */
+.modal {
+    display: none; /* مخفية افتراضياً */
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    margin: auto;
+    padding: 30px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+    position: relative;
+    font-family: 'Tajawal', sans-serif;
+    text-align: center;
+}
+
+.close-modal {
+    color: #aaa;
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    color: black;
+}
+
+#invoiceDetails h2 {
+    color: var(--primary-blue);
+    margin-bottom: 10px;
+}
+
+#invoiceDetails .invoice-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+#invoiceDetails .doctor-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 10px 0;
+}
+
+#invoiceDetails .visit-date {
+    background: #f0f5ff;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 15px 0;
+    font-size: 1.1rem;
+}
+
+#invoiceDetails .visit-time {
+    background: #f0f5ff;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 15px 0;
+    font-size: 1.1rem;
+}
+
+#invoiceDetails .confirm-msg {
+    color: #10b981;
+    font-weight: 600;
+    margin: 10px 0;
+    font-size: 1.2rem;
+}
+
+#invoiceDetails .payment-note {
+    background: #fff3cd;
+    border-right: 5px solid #ffc107;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 15px 0;
+    text-align: right;
+}
+
+#invoiceDetails .invoice-footer {
+    margin-top: 20px;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+#invoiceDetails .btn-close-invoice {
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 30px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+#invoiceDetails .btn-close-invoice:hover {
+    background: var(--hover-blue);
+}

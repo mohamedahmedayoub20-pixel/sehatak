@@ -1,0 +1,371 @@
+/* تعريف المتغيرات العامة للألوان والقيم المستخدمة في التصميم */
+:root {
+    --primary-blue: #007bff;     /* اللون الأزرق الرئيسي */
+    --hover-blue: #0056b3;       /* الأزرق عند تمرير الماوس */
+    --light-bg: #f8faff;         /* خلفية الصفحة الفاتحة */
+    --gray-text: #6c757d;        /* النص الرمادي */
+    --border-color: #e0e6ed;     /* لون الحدود */
+}
+
+/* تنسيقات عامة للصفحة */
+body {
+    font-family: 'Tajawal', sans-serif;  
+    background-color: var(--light-bg);   
+    margin: 0;                            /* إزالة الهوامش الافتراضية */
+    direction: rtl;                       /* اتجاه النص من اليمين لليسار */
+    color: #333;                          /* لون النص الأساسي */
+}
+
+/* تنسيق رأس الصفحة */
+header {
+    /*padding: 30px 5%;     */                
+    text-align: center;                    /* توسيط المحتوى */
+    background: white;                     /* خلفية بيضاء */
+    border-bottom: 1px solid var(--border-color); /* خط سفلي */
+}
+
+/* تنسيق الشريط العلوي (الروابط وأيقونة السلة) */
+.top-nav {
+    display: flex;                         
+    justify-content: space-between;        /* توزيع متساوي بين اليمين واليسار */
+    align-items: center;                   /* محاذاة عمودية في المنتصف */
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* تنسيق رابط العودة للصفحة الرئيسية */
+.back-link {
+    text-decoration: none;                  /* إزالة الخط السفلي */
+    color: var(--gray-text);                 /* لون رمادي */
+    display: inline-block;
+    text-align: right;
+    font-size: 25px;
+    transition: color 0.3s;                  /* تأثير تغيير اللون عند التمرير */
+}
+/* تغيير اللون عند التمرير */
+.back-link:hover {
+    color: var(--primary-blue);               
+}
+
+/* تنسيق أيقونة السلة */
+.cart-icon {
+    position: relative;                       /* لتحديد موضع العداد بداخلها */
+    display: inline-block;
+    cursor: pointer;                          /* مؤشر يد */
+    font-size: 28px;
+    padding: 8px;
+    border-radius: 50%;                       /* شكل دائري عند التمرير */
+    transition: background-color 0.3s;
+}
+/* خلفية رمادية فاتحة عند التمرير */
+.cart-icon:hover {
+    background-color: #f0f0f0;                
+}
+/*عرض الايقونة ككتلة*/
+.cart-symbol {
+    display: block;                            /* لضمان ظهور الرمز */
+}
+
+/* عداد السلة (الرقم الظاهر على الأيقونة) */
+.cart-count {
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    background-color: var(--primary-blue);    /* خلفية زرقاء */
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: bold;
+    min-width: 18px;                           /* أقل عرض لتبقى دائرة */
+    text-align: center;
+    line-height: 1.4;
+    border: 2px solid white;                   /* حد أبيض حول العداد */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);     /* ظل خفيف */
+}
+
+/* الدائرة التي تحوي الأيقونة الرئيسية (رمز الدواء) */
+.icon-circle {
+    background: #e7f1ff;                        /* خلفية زرقاء فاتحة */
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;                              /* توسيط الأيقونة داخل الدائرة */
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;                        /* توسيط أفقي ومسافة سفلية */
+    font-size: 30px;
+}
+
+/* حاوية مربع البحث */
+.search-container {
+    position: relative;                         /* لوضع الأيقونة داخله بشكل مطلق */
+    max-width: 600px;                           /* أقصى عرض للحاوية */
+    /*margin: 35px auto;*//* توسيط أفقي ومسافة علوية وسفلية */
+}
+
+/* حقل إدخال النص للبحث */
+#searchInput {
+    width: 100%;
+    padding: 15px 45px 20px 20px;               
+    border-radius: 30px;                         /* زوايا دائرية كبيرة */
+    border: 1px solid var(--border-color);
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);    /* ظل خفيف */
+    font-family: 'Tajawal', sans-serif;
+    font-size: 16px;
+}
+
+/* عند التركيز على حقل البحث */
+#searchInput:focus {
+    outline: none;                               /* إزالة الإطار الافتراضي */
+    border-color: var(--primary-blue);           /* تغيير لون الحد للأزرق */
+    box-shadow: 0 2px 15px rgba(0,123,255,0.2); /* ظل أزرق خفيف */
+}
+
+/* أيقونة البحث داخل الحقل */
+.search-icon {
+    position: absolute;
+    right: 20px;                               
+    top: 15px;
+    color: var(--primary-blue);
+    font-size: 18px;
+}
+
+/* قسم الفلاتر (أزرار التصنيف) */
+.filters {
+    margin: 30px 5%;
+}
+/*فلتر للعنوان*/
+.filters h3 {
+    color: var(--gray-text);
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+/* حاوية أزرار الفلترة */
+.filter-buttons {
+    display: flex;
+    gap: 10px;                                   /* مسافة بين الأزرار */
+    margin-bottom: 30px;
+    flex-wrap: wrap;                              /* السماح بالتفاف الأزرار */
+    justify-content: center;                      /* توسيط الأزرار أفقياً */
+}
+
+/* تصميم زر الفلترة */
+.filter-btn {
+    padding: 12px 25px;
+    border-radius: 25px;                          /* زوايا دائرية */
+    border: 1px solid var(--border-color);
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+}
+/*عند التمرير يتغير اللون*/
+.filter-btn:hover {
+    background: #e7f1ff;                          /* خلفية زرقاء فاتحة عند التمرير */
+    border-color: var(--primary-blue);
+}
+
+/* الزر النشط (الفئة المحددة حالياً) */
+.filter-btn.active {
+    background: var(--primary-blue);               /* أزرق */
+    color: white;
+    border-color: var(--primary-blue);
+}
+
+/* بطاقة المنتج */
+.pharmacy-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;                           /* مسافة بين البطاقات */
+    display: flex;                                  /* ترتيب أفقي لمحتويات البطاقة */
+    align-items: center;                            /* محاذاة العناصر عمودياً في المنتصف */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);        /* ظل خفيف جداً */
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s, box-shadow 0.2s;    /* تأثيرات حركية */
+}
+/*عند التمرير*/
+.pharmacy-card:hover {
+    transform: translateY(-3px);                    /* رفع البطاقة قليلاً */
+    box-shadow: 0 6px 15px rgba(0,0,0,0.08);        /* تكثيف الظل */
+}
+
+/* جانب الصورة */
+.image-side {
+    flex-shrink: 0;                                 /* منع الصورة من الانكماش */
+}
+/*الصور*/
+.image-side img {
+    width: 200px;
+    height: 160px;
+    border-radius: 12px;
+    object-fit: cover;                               /* اقتصاص الصورة لتناسب الإطار */
+    border: 2px solid #f0f4f8;                       /* حدود خفيفة */
+}
+
+/* جانب التفاصيل (النص) */
+.details-side {
+    flex-grow: 1;                                    /* أخذ المساحة المتبقية */
+    padding: 0 25px;
+}
+/*جانب التفاصيل النص*/
+.details-side h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.3rem;
+    color: #2d3436;
+}
+/* الفئة والوصف */
+.spec {
+    color: var(--primary-blue);
+    font-weight: 500;
+    margin: 5px 0;
+    font-size: 0.95rem;
+}
+
+/* التقييم بالنجوم */
+.rating {
+    color: #fdcb6e;                                  /* لون النجوم */
+    font-size: 14px;
+    margin: 8px 0;
+}
+
+.rev-count {
+    color: #b2bec3;                                   /* لون عدد التقييمات */
+    margin-right: 5px;                                 /* مسافة عن النجوم */
+}
+
+/* معلومات الموقع */
+.meta {
+    font-size: 13px;
+    color: var(--gray-text);
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* حالة التوفر والسعر */
+.price-status {
+    color: #00b894;                                    /* لون الحالة (متوفر) */
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+/* السعر */
+.price {
+    font-weight: bold;
+    color: #2d3436;
+    font-size: 18px;
+    margin-left: auto;                                 /* دفع السعر إلى اليسار */
+}
+
+/* جانب الأزرار (إضافة للسلة والملف الشخصي) */
+.actions-side {
+    display: flex;
+    flex-direction: column;                            /* ترتيب الأزرار عمودياً */
+    gap: 10px;
+    min-width: 140px;
+}
+
+/* زر الإضافة إلى السلة */
+.btn-book {
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 16px;
+    font-family: 'Tajawal', sans-serif;
+    transition: all 0.3s;
+}
+
+.btn-book:hover {
+    background: var(--hover-blue);                     /* أزرق داكن عند التمرير */
+    transform: scale(1.02);                             /* تكبير طفيف */
+}
+
+/* زر الملف الشخصي */
+.btn-profile {
+    background: #f8f9fa;
+    border: 1px solid var(--border-color);
+    padding: 10px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--gray-text);
+    font-size: 14px;
+    font-family: 'Tajawal', sans-serif;
+    transition: all 0.3s;
+}
+
+.btn-profile:hover {
+    background: #e9ecef;                                /* خلفية أغمق قليلاً */
+}
+
+/* تحسينات للشاشات الصغيرة (عرض أقل من 768px) */
+@media (max-width: 768px) {
+    header {
+        padding: 20px 3%;
+    }
+
+    .back-link {
+        font-size: 18px;
+    }
+
+    .cart-icon {
+        font-size: 24px;
+    }
+
+    /* جعل البطاقة في عمود واحد */
+    .pharmacy-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .details-side {
+        padding: 15px 0;
+        width: 100%;
+    }
+
+    .actions-side {
+        width: 100%;
+        flex-direction: row;            /* الأزرار بجانب بعضها أفقياً */
+        justify-content: center;
+    }
+
+    .image-side img {
+        width: 150px;
+        height: 150px;
+    }
+
+    .filter-btn {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+
+    .price-status,
+    .meta {
+        justify-content: center;        /* توسيط المحتوى */
+    }
+}
+
+/* تحسينات للشاشات الصغيرة جداً (عرض أقل من 480px) */
+@media (max-width: 480px) {
+    .actions-side {
+        flex-direction: column;         /* الأزرار تعود للترتيب العمودي */
+    }
+
+    .btn-book,
+    .btn-profile {
+        width: 100%;                    /* عرض كامل */
+    }
+}

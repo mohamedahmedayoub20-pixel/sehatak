@@ -1,0 +1,519 @@
+/* المتغيرات العامة */
+:root {
+    --primary-color: #8c4ccf;        /* اللون الأساسي البنفسجي للأيقونات */
+    --text-main: #333;                /* اللون الرئيسي للنصوص (رمادي غامق) */
+    --text-light: #777;                /* لون النصوص الثانوية (رمادي فاتح) */
+    --bg-gray: #f9f9f9;                /* لون خلفية الصفحة (رمادي خفيف) */
+    --white: #ffffff;                  /* الأبيض للخلفيات */
+    --shadow: 0 4px 20px rgba(0,0,0,0.1);   /* ظل خفيف */
+    --border-radius: 16px;             /* قيمة موحدة لتدوير الزوايا */
+    --book-btn-color: #0066cc;          /* لون زر الحجز (أزرق) */
+    --book-btn-hover: #0052a3;          /* لون الزر عند المرور عليه (أزرق داكن) */
+    --price-color: #0066cc;             /* لون السعر (نفس الأزرق) */
+    --message-color: #0066cc;           /* لون خلفية رسالة التأكيد (أزرق) */
+    --active-tag-color: #0066cc;        /* لون خلفية علامة التبويب النشطة */
+    --active-tag-hover: #0052a3;         /* لون علامة التبويب عند المرور عليها */
+}
+
+/* إعادة تعيين القيم الافتراضية */
+* {
+    box-sizing: border-box;   
+    margin: 0;                
+    padding: 0;               
+}
+
+/* تنسيق جسم الصفحة */
+body {
+    font-family:'Tajawal', sans-serif;  
+    background-color: var(--bg-gray);      
+    color: var(--text-main);               
+    line-height:1.6;                      
+}
+
+/* تنسيق رأس الصفحة (الهيدر) */
+.main-header {
+    background-color: var(--white);       
+    padding: 20px 50px 60px;               
+    text-align: center;                     
+    position: relative;                      
+}
+
+/* محاذاه الروابط */
+.top-nav {
+    text-align: right;                       
+    margin-bottom: 20px;                 
+}
+
+/* تنسيق رابط عودة للصفحة الرئيسية */
+.back-home {
+    text-decoration: none;                    /* إزالة الخط السفلي */
+    color: var(--text-main);                  /* لون النص */
+    font-weight: 500;                        
+    cursor: pointer;                           /* تغيير المؤشر إلى يد */
+    display: inline-block;                  
+    padding: 5px 10px;                        
+    border-radius: 20px;                       /* تدوير الزوايا */
+    transition: background 0.3s;              
+}
+
+/* تغيير الخلفية عند التمرير */
+.back-home:hover {
+    background: #f0f0f0;                     
+}
+
+/* دائرة الاشعار */
+.logo-circle {
+    width: 60px;
+    height: 60px;
+    background: #fdf6ff;                        
+    border: 1px solid #eee;                     /* حدود رمادية فاتحة */
+    border-radius: 50%;                          /* دائرة كاملة */
+    display: flex;
+    align-items: center;                         /* توسيط عمودي للأيقونة */
+    justify-content: center;                     /* توسيط أفقي */
+    margin: 0 auto 10px;                       
+}
+
+.flask-icon {
+    font-size: 30px;                             /* حجم الأيقونة (أنبوب الاختبار) */
+}
+
+/* تنسيق العنوان */
+.brand-section h1 {
+    font-size: 2.2rem;                           /* حجم كبير للاسم */
+    color: #1a1a1a;                               /* أسود داكن */
+}
+
+/* تنسيق فقرة وصفية */
+.brand-section p {
+    color: var(--text-light);                     /* رمادي فاتح للشعار الفرعي */
+    margin-top: 5px;                               /* مسافة بسيطة فوق النص */
+}
+
+/* شريط البحث */
+.search-bar {
+    position: absolute;               /* وضع مطلق بالنسبة للهيدر */
+    bottom: -25px;                  
+    left: 50%;
+    transform: translateX(-50%);       
+    width: 95%;
+    max-width: 600px;                 
+    background: var(--white);
+    padding: 5px 15px;
+    border-radius: 50px;               /* تدوير كبير لجعله كبسولة */
+    box-shadow: var(--shadow);          /* ظل خفيف */
+    display: flex;
+    align-items: center;
+}
+
+/* حقل الادخال ياخد المساحة الباقية */
+.search-bar input {
+    width: 100%;
+    border: none;                       /* إزالة الحدود الافتراضية */
+    padding: 12px;
+    outline: none;                       /* إزالة التحديد الأزرق عند التركيز */
+    font-family: inherit;                 /* استخدام نفس الخط العام */
+    font-size: 1rem;
+}
+
+/* ايقونة البحث حجم / لون */
+.search-icon {
+    font-size: 1.2rem;
+    color: var(--text-light);
+}
+
+/* المحتوى الرئيسي (الجزء الأوسط) */
+.content-wrapper {
+    /*padding: 80px 5% 40px;   */      
+}
+
+
+    /* حقل البحث */
+    .search-container {
+    position: relative;
+    max-width: 600px;
+    /*margin: 20px auto;*/
+    width: 95%;
+    }
+    
+    /* حقل البحث */
+    #searchInput {
+    width: 100%;
+    padding: 20px 55px 20px 20px;
+    border-radius: 40px;
+    border: 1px solid var(--border-color);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1rem;
+    background: white;
+    }
+    
+    /* حقل البحث */
+    .search-icon {
+    position: absolute;
+    right: 20px;
+    top: 14px;
+    font-size: 1.3rem;
+    color: var(--primary-blue);
+    }
+    
+
+/* قسم التصفية (الأزرار) */
+.filter-section h2 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+}
+
+/* حاوية */
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+/* تنسيق كل تاج */
+.tag {
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    background: var(--white);
+    cursor: pointer;
+    font-family: inherit;
+    transition: 0.2s;
+}
+
+/* عند التمرير يغمق اللون */
+.tag:hover {
+    background: #f0f0f0;
+}
+
+/* الزر النشط (الفئة المختارة) */
+.tag.active {
+    background: var(--active-tag-color);
+    color: #fff;
+    border-color: var(--active-tag-color);
+}
+
+/* عند التمرير يتغير اللون */
+.tag.active:hover {
+    background: var(--active-tag-hover);
+}
+
+/* شبكة البطاقات (عرض تحاليل) */
+.analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);   /* خانتان متساويتان في السطر */
+    gap: 25px;
+    margin-top: 30px;
+}
+
+/* بطاقة التحليل الواحدة */
+.analysis-card {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #f0f0f0;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.analysis-card:hover {
+    transform: translateY(-5px);              /* رفع البطاقة للأعلى قليلاً */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* ظل أكبر عند التمرير */
+}
+
+/* الجزء العلوي من البطاقة (أيقونة + عنوان) */
+.card-top {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+/* صندوق البطاقة */
+.card-icon-box {
+    width: 50px;
+    height: 50px;
+    background: #f8f0ff;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: var(--primary-color);
+}
+
+/* عنوان البطاقة */
+.card-title-info h3 {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+
+/* فقرة البطاقة */
+.card-title-info p {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+/* نوع التحليل */
+.badge {
+    display: inline-block;
+    background: #f0f0f0;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+}
+
+/* عناصر التفاصيل (الموقع، المدة) */
+.detail-item {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 6px;
+}
+
+/* الجزء السفلي من البطاقة (زر الحجز والسعر) */
+.card-action {
+    border-top: 1px solid #f0f0f0;
+    margin-top: 20px;
+    padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* زر احجز الآن */
+.book-btn {
+    background: var(--book-btn-color);
+    color: #fff;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.3s;
+}
+
+/* عند التمرير يتغير اللون */
+.book-btn:hover {
+    background: var(--book-btn-hover);
+}
+
+/* السعر */
+.price {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--price-color);
+}
+
+/* رسالة التأكيد (عند الحجز) */
+.booking-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--message-color);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 50px;
+    box-shadow: 0 5px 20px rgba(0, 102, 204, 0.4);
+    z-index: 1000;
+    animation: slideDown 0.3s ease;
+    font-weight: 500;
+}
+
+/* حركة ظهور الرسالة */
+@keyframes slideDown {
+    from {
+        top: -100px;
+        opacity: 0;
+    }
+    to {
+        top: 20px;
+        opacity: 1;
+    }
+}
+
+/* رسالة عدم وجود نتائج */
+.no-results {
+    grid-column: 1 / -1;            /* تمتد على كل الأعمدة */
+    text-align: center;
+    padding: 50px;
+    font-size: 1.2rem;
+    color: var(--text-light);
+    background: var(--white);
+    border-radius: var(--border-radius);
+}
+
+/* تحسينات للشاشات الصغيرة (التجاوب) */
+@media (max-width: 768px) {
+    .main-header {
+        padding: 20px 20px 60px;    /* تقليل الحشوة الجانبية */
+    }
+    
+    .search-bar {
+        width: 90%;                  /* عرض أكبر بالنسبة للشاشة */
+    }
+    
+    .analysis-grid {
+        grid-template-columns: 1fr;  /* بطاقة واحدة لكل سطر */
+    }
+    
+    .card-action {
+        flex-direction: column;       /* زر الحجز والسعر تحت بعض */
+        gap: 15px;
+    }
+    
+    .book-btn {
+        width: 100%;                  /* الزر يأخذ العرض الكامل */
+    }
+}
+
+/* ============= تنسيقات بوت المحادثة ============= */
+/* الحاوية الرئيسية للبوت، مثبتة في أسفل يسار الشاشة */
+.chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    font-family: 'Tajawal', sans-serif;
+}
+
+/* أيقونة البوت (الدائرة الزرقاء) */
+.chat-icon {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    background-color: var(--book-btn-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,102,204,0.3);
+    transition: transform 0.2s;
+}
+
+/* تأثير تكبير الأيقونة عند المرور بالماوس */
+.chat-icon:hover {
+    transform: scale(1.1);
+}
+
+/* نافذة المحادثة - تظهر فوق الأيقونة */
+.chat-window {
+    position: absolute;
+    bottom: 80px;
+    left: 0;
+    width: 320px;
+    height: 450px;
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+    display: none; /* مخفية افتراضياً، تظهر عند النقر */
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+
+/* رأس نافذة المحادثة */
+.chat-header {
+    background-color: var(--book-btn-color);
+    color: white;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+}
+
+/* زر إغلاق نافذة المحادثة */
+.close-chat {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+/* منطقة عرض الرسائل (قابلة للتمرير) */
+.chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #f9f9f9;
+}
+
+/* تنسيق عام لأي رسالة (مستخدم أو بوت) */
+.message {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    word-wrap: break-word;
+    font-size: 0.95rem;
+}
+
+/* رسالة المستخدم - زرقاء ومحاذاة لليسار (في RTL تعني جهة المستخدم) */
+.user-message {
+    align-self: flex-start;
+    background-color: var(--book-btn-color);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+/* رسالة البوت - رمادية ومحاذاة لليمين (في RTL تعني جهة البوت) */
+.bot-message {
+    align-self: flex-end;
+    background-color: #e9eef3;
+    color: #1e293b;
+    border-bottom-left-radius: 4px;
+}
+
+/* منطقة إدخال النص والزر */
+.chat-input-area {
+    display: flex;
+    border-top: 1px solid #e2e8f0;
+    padding: 10px;
+    background: white;
+}
+
+/* حقل إدخال النص */
+.chat-input-area input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    font-family: 'Tajawal', sans-serif;
+    outline: none;
+}
+
+/* زر الإرسال */
+.chat-input-area button {
+    background-color: var(--book-btn-color);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 15px;
+    margin-right: 8px;
+    cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 600;
+}
+
+/* تأثير المرور على زر الإرسال */
+.chat-input-area button:hover {
+    background-color: var(--book-btn-hover);
+}
+
+/* تحسينات للشاشات الصغيرة جداً */
+@media (max-width: 480px) {
+    .chat-window {
+        width: 280px;
+        left: -20px; /* لتوسيط النافذة قليلاً */
+        bottom: 70px;
+    }
+}

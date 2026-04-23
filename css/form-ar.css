@@ -1,0 +1,252 @@
+body{
+    margin: 0;
+    background-color:rgb(227, 232, 234);
+    width: 100%;
+    height: 90%;
+    padding: 0;
+}
+.form{
+    width: 80%;
+    height: 100%;
+    background-color:white;
+    margin-top: 2.5%;
+    margin-right: 10%;
+    border: 0;
+    border-radius: 20px;
+    display: inline-block;
+}
+.logo{
+    width: 80%;
+    height: 12%;
+    margin: 1% 10% 0 0;
+    display: flex;
+}
+.logo a {
+    width: 8%;
+    height: 100%;
+    margin-right: 2%;
+}
+.logo a:nth-child(1){
+    margin-right: 0;
+    margin-left: 72%;
+}
+a img {
+    width: 100%;
+    height: 100%;
+}
+
+.data{
+    width: 90%;
+    height: 84%;
+    display: flex;
+    margin-right: 5%;
+}
+.item{
+    width: 40%;
+    height: 94%;
+    margin: 2% 5% 0 5%;
+    display: flex;
+}
+.Information {
+    margin-top: 0px;
+    margin-right: 18px;
+    margin-bottom: 0;
+    font-size: 25px;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+    color: rgb(0, 0, 0);
+    width: 100%;
+}
+.text h5{
+    font-size: 12px ;
+    font-weight: 100;
+    margin-top: 5%;
+    margin-bottom: 7%;
+    color: rgba(0, 0, 0, 0.611);
+}
+input{
+    width: 100%;
+    height: 9%;
+}
+.email h4{
+    font-size: 14px ;
+    font-weight: 100;
+    color: rgba(0, 0, 0, 0.86);
+    margin-top: 0%;
+    margin-bottom: 1%;
+}
+.password h4{
+    font-size: 14px ;
+    font-weight: 100;
+    color: rgba(0, 0, 0, 0.86);
+    margin-top: 3%;
+    margin-bottom: 1%;
+}
+.forget{
+    display: flex;
+    
+}
+.Forgot_password{
+    width: 80%;
+    height: 1%;
+    display: flex;
+    margin-top: 2%;
+}
+.Forgot_password input{
+    width: 10%;
+    height: 10%;
+    margin: 3% 0 3% 1%;
+}
+.Forgot_password h6{
+    font-size: 9px;
+    font-weight: 100;
+    margin: 4% 1% 3% 0;
+    color: black;
+}
+.Forgot_password a{
+    font-size: 9px;
+    color: rgb(222, 70, 70);
+    font-weight: 100;
+    text-decoration: none;
+    margin: 5% 58% 3% 0;
+}
+button {
+    display: flex;
+    font-size: 17px;
+    margin: 20px 0;
+    margin-bottom: 0;
+    width: 100%;
+    height: 10%;
+    padding: 3%;
+    justify-content: center;
+    text-align: center;
+    background-color: rgb(51, 94, 213);
+    border: none;
+    outline: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+}
+button:hover{
+    background-color: rgb(42, 69, 143);
+}
+.quest{
+    margin-top: 0;
+    margin-bottom: 0;
+}
+p{
+    font-size: 10px;
+    font-weight: 100;
+    color: black;
+    margin-right: 30%;
+    margin-top: 4%;
+    margin-bottom: 0;
+}
+p a{
+    font-size: 10px;
+    color: rgb(222, 70, 70);
+    font-weight: 100;
+    text-decoration: none;
+}
+.login{
+    width: 100%;
+    height: 4%;
+}
+.login h3{
+    font-size: 12px ;
+    font-weight: 100;
+    color: rgba(0, 0, 0, 0.611);
+    margin-top: 7%;
+    margin-right: 39%;
+}
+.social-icons {
+    margin-top: 2%;
+    width: 100%;
+}
+.social-icons a {
+    display: inline-block;
+    background-color: #ffffff43;
+    width: 29%;
+    height: 8%;
+    text-align: center;
+    border: 1px solid rgba(0, 0, 0, 0.261);
+    border-radius: 5%;
+    margin: 3% 1.5% 0 1%;
+    transition: background-color 0.3s ease;
+}
+.social-icons a i{
+    margin-top: 10%;
+}
+.social-icons .face {
+    font-size: 18px;
+    color: #0275d8;
+}
+.social-icons .goog {
+    font-size: 18px;
+    color: #ef4a41;
+}
+.social-icons .insta {
+    font-size: 18px;
+    color: #cf0de8;
+}
+.social-icons a:hover {
+    background-color: #bbb;
+    color: black;
+}
+
+.item img{
+    width: 90%;
+    height: 100%;
+    border: 0;
+    border-radius: 20px;
+    margin-right: 10%;
+}
+
+
+/*@media*/
+@media (min-width:300px) and (max-width:800px) {
+    .form{
+    width: 90%;
+    height: 100%;
+    margin-top: 5%;
+    margin-right: 5%;
+            }
+    .logo{
+    width: 95%;
+    height: 14%;
+    margin: 1% 2% 0 0;
+            }
+    .logo a {
+        width: 14%;
+        height: 90%;
+            }
+    .logo a:nth-child(1){
+        margin-left: 60%;
+                        }
+    .data{
+    width: 94%;
+    height: 82%;
+    margin-right: 3%;
+            }
+    .item{
+    width: 52%;
+    margin: 2% 0% 0 0%;
+            }
+    .Information {
+    margin: 0;
+                    }
+    .Forgot_password a{
+    margin: 5% 36% 3% 0;
+                        }
+    button {
+        margin: 20px 0;
+        padding: 4%;
+            }
+    p{
+    margin-right: 24%;
+        }
+    .social-icons a {
+    width: 28%;
+    margin-top: 4%;
+                    }
+}
