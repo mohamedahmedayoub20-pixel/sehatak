@@ -73,6 +73,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } catch (PDOException $e) {
             $error = "خطأ في القاعدة: " . $e->getMessage();
         }
+    } else if ($action == 'update-user-status') {
+        $userId = $_POST['userId'];
+        $newStatus = $_POST['userType']; // هنا نستخدم userType لتحديد الحالة الجديدة
+
+        try {
+            $stmt = $pdo->prepare("UPDATE user SET account_status = ? WHERE user_id = ?");
+            $result = $stmt->execute([$newStatus, $userId]);
+
+            if ($result) {
+                $error = '';
+            } else {
+                $error = "Failed to update user status";
+            }
+        } catch (PDOException $e) {
+            $error = "خطأ في القاعدة: " . $e->getMessage();
+        }
     } else {
         $error = "Unknown action";
     }
@@ -333,7 +349,7 @@ $users = $userQuery->fetchAll(PDO::FETCH_ASSOC);
 
     <div class="container">
 
-        <?php if (isset($error)): ?>
+        <?php if (isset($error) && !empty($error)): ?>
             <div class="card" style="background: #f8d7da; color: #721c24; margin-bottom: 20px;">
                 <?php echo htmlspecialchars($error); ?>
             </div>
@@ -369,8 +385,8 @@ $users = $userQuery->fetchAll(PDO::FETCH_ASSOC);
                                 </td>
                                 <td>
                                     <button class="btn btn-edit" onclick="editUser(<?php echo htmlspecialchars($row['user_id']); ?>)">تعديل</button>
-                                    <button class="btn btn-status" onclick="toggleUser(<?php echo htmlspecialchars($row['user_id']); ?>)">
-                                        <?php echo ($row['account_status'] != 'active') ? 'تفعيل' : 'تعطيل'; ?>
+                                    <button class="btn btn-status" onclick="toggleUser(<?php echo htmlspecialchars($row['user_id']); ?>, '<?php echo htmlspecialchars($row['name']); ?>')">
+                                        تغيير الحالة
                                     </button>
 
                                     <?php if ($row['account_type'] == 'doctor') {
@@ -504,6 +520,37 @@ $users = $userQuery->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
+    <div id="userStatusChangeModal" class="modal">
+        <div class="modal-content" style="width: 500px;">
+            <h3 id="userStatusChangeModalTitle">تغيير حالة المستخدم</h3>
+            <hr><br>
+
+            <form method="POST" id="userStatusForm">
+                <input type="hidden" name="action" id="statusFormAction" value="update-user-status">
+                <input type="hidden" name="userId" id="statusFormUserId" value="">
+
+                <div class="account-box" style="margin-bottom: 20px;">
+                    <h3>حاله الحساب</h3>
+                    <select name="userType" id="userType" style="width: 100%; padding: 8px;" required>
+                        <option value="" disabled selected>اختر النوع...</option>
+                        <option value="active">نشط</option>
+                        <option value="inactive">غير نشط</option>
+                        <option value="suspended">معلق</option>
+                        <option value="deleted">محذوف</option>
+                        <option value="archived">مؤرشف</option>
+                        <option value="pending">قيد الانتظار</option>
+                        <option value="blocked">محظور</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-add">حفظ البيانات</button>
+                    <button type="button" class="btn btn-delete" onclick="closeModal('userStatusChangeModal')">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal الطلبات -->
     <div id="orderModal" class="modal">
         <div class="modal-content">
@@ -622,6 +669,12 @@ $users = $userQuery->fetchAll(PDO::FETCH_ASSOC);
             }
             closeModal('userModal');
             renderUsers();
+        }
+
+        function toggleUser(userId, userName) {
+            document.getElementById('userStatusChangeModalTitle').innerText = "تغيير حالة المستخدم: " + userName;
+            document.getElementById('statusFormUserId').value = userId;
+            document.getElementById('userStatusChangeModal').style.display = 'flex';
         }
 
         // --- إدارة الطلبات ---
