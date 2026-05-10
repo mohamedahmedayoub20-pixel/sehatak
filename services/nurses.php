@@ -1,11 +1,71 @@
 <?php
 include "../includes/auth.php";
+include "../includes/database.php";
 
 $language = "ar";
 if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'ar'])) {
     $language = $_GET['lang'];
 }
+
+$error = "";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['action'] === 'book-visit') {
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'message' => 'User session not found.']);
+        exit;
+    }
+
+    $userId = $_SESSION['user_id'];
+    $nurseId = $_POST['nurse_id'];
+    $currentDate = date('Y-m-d');
+    $fullTimestamp = date('Y-m-d H:i:s');
+
+    try {
+        // 1. Resolve Patient ID
+        $patientStmt = $pdo->prepare("SELECT patient_id FROM patient WHERE user_id = ?");
+        $patientStmt->execute([$userId]);
+        $patient = $patientStmt->fetch();
+
+        if (!$patient) {
+            // Create patient profile if missing
+            $userStmt = $pdo->prepare("SELECT name FROM user WHERE user_id = ?");
+            $userStmt->execute([$userId]);
+            $userName = ($u = $userStmt->fetch()) ? $u['name'] : 'New Patient';
+
+            $insPatient = $pdo->prepare("INSERT INTO patient (user_id, name, deleted) VALUES (?, ?, '0')");
+            $insPatient->execute([$userId, $userName]);
+            $patientId = $pdo->lastInsertId();
+        } else {
+            $patientId = $patient['patient_id'];
+        }
+
+        $checkVisit = $pdo->prepare("SELECT COUNT(*) FROM `visiting a nurse` WHERE patient_id = ? AND DATE(visit_time) >= ? AND is_deleted = 0");
+        $checkVisit->execute([$patientId, $currentDate]);
+
+        if ($checkVisit->fetchColumn() > 0) {
+            $error =  'لديك زيارة مستقبلة مسجلة بالفعل !. لا يمكنك حجز أكثر من زيارة في نفس الوقت.';
+        } else {
+            $insertVisit = $pdo->prepare("INSERT INTO `visiting a nurse` (nurse_id, patient_id, visit_time, visiting_dates) VALUES (?, ?, ?, ?)");
+            $result = $insertVisit->execute([$nurseId, $patientId, $fullTimestamp, $currentDate]);
+
+            $error = 'تم إرسال طلب الحجز للممرض(ة) بنجاح! سيتواصل معك فريق التمريض فوراً.';
+        }
+    } catch (PDOException $e) {
+        $error =  'Database Error: ' . $e->getMessage();
+    }
+}
+
+$nursesQuery = $pdo->prepare("SELECT 
+             `nurse`.`nurse_id`,
+             `nurse`.`name` AS `name`,
+             `nurse`.`phone_number` AS `phone`,
+             `nurse`.`years_of_experience` AS `experience`
+         FROM `nurse`");
+
+$nursesQuery->execute();
+$nurses = $nursesQuery->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="<?php echo $language; ?>" dir="<?php echo $language === 'ar' ? 'rtl' : 'ltr'; ?>">
@@ -88,219 +148,45 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'ar'])) {
                 </div>
             </section>
 
+
+            <?php if (isset($error) && !empty($error)): ?>
+                <div class="card" style="background: #f8d7da; color: #721c24; margin-bottom: 20px;">
+                    <?php echo htmlspecialchars($error); ?>
+                </div>
+            <?php endif; ?>
+
+
             <!-- شبكة بطاقات الممرضين -->
             <div class="nurse-grid" id="nurseGrid">
-                <!-- بطاقة 1: فاطمة احمد حسن -->
-                <div class="nurse-card" data-type="عام" data-name="فاطمة احمد حسن">
-                    <div class="image-side">
-                        <img src="../images/nurse-female.jpeg" alt="ممرضة" class="nurse-img">
-                    </div>
-                    <div class="details-side">
-                        <h3>م. فاطمة احمد حسن</h3>
-                        <p class="spec">تمريض منزلي عام</p>
-                        <p class="rating">⭐ 4.9 <span class="rev-count">(156 تقييم)</span></p>
-                        <p class="meta">📍 القاهرة، مصر الجديدة | 🕒 8 سنوات</p>
-                        <p class="price-status">● متاح الآن <span class="price">80 جنيه</span></p>
-                    </div>
-                    <div class="actions-side">
-                        <button class="btn-book" onclick="bookNow('فاطمة احمد حسن')">احجز الآن</button>
-                        <button class="btn-profile" onclick="viewProfile('فاطمة احمد حسن')">عرض الملف</button>
-                    </div>
-                </div>
 
-                <!-- بطاقة 2: محمد سعيد علي -->
-                <div class="nurse-card" data-type="كبار" data-name="محمد سعيد علي">
-                    <div class="image-side">
-                        <img src="../images/nurse-male.jpeg" alt="ممرض" class="nurse-img">
-                    </div>
-                    <div class="details-side">
-                        <h3>م. محمد سعيد علي</h3>
-                        <p class="spec">رعاية كبار السن</p>
-                        <p class="rating">⭐ 4.9 <span class="rev-count">(203 تقييم)</span></p>
-                        <p class="meta">📍 الإسكندرية، سموحة | 🕒 12 سنة</p>
-                        <p class="price-status">● متاح الآن <span class="price">85 جنيه</span></p>
-                    </div>
-                    <div class="actions-side">
-                        <button class="btn-book" onclick="bookNow('محمد سعيد علي')">احجز الآن</button>
-                        <button class="btn-profile" onclick="viewProfile('محمد سعيد علي')">عرض الملف</button>
-                    </div>
-                </div>
 
-                <!-- بطاقة 3: نورا خالد ابراهيم -->
-                <div class="nurse-card" data-type="اطفال" data-name="نورا خالد ابراهيم">
-                    <div class="image-side">
-                        <img src="../images/nurse-female.jpeg" alt="ممرضة" class="nurse-img">
-                    </div>
-                    <div class="details-side">
-                        <h3>م. نورا خالد ابراهيم</h3>
-                        <p class="spec">تمريض الأطفال</p>
-                        <p class="rating">⭐ 4.9 <span class="rev-count">(178 تقييم)</span></p>
-                        <p class="meta">📍 الجيزة، المهندسين | 🕒 10 سنوات</p>
-                        <p class="price-status">● متاح الآن <span class="price">85 جنيه</span></p>
-                    </div>
-                    <div class="actions-side">
-                        <button class="btn-book" onclick="bookNow('نورا خالد ابراهيم')">احجز الآن</button>
-                        <button class="btn-profile" onclick="viewProfile('نورا خالد ابراهيم')">عرض الملف</button>
-                    </div>
-                </div>
+                <?php foreach ($nurses as $nurse) : ?>
 
-                <!-- بطاقة 4: احمد محمود حسين -->
-                <div class="nurse-card" data-type="العمليات" data-name="احمد محمود حسين">
-                    <div class="image-side">
-                        <img src="../images/nurse-male.jpeg" alt="ممرض" class="nurse-img">
-                    </div>
-                    <div class="details-side">
-                        <h3>م. احمد محمود حسين</h3>
-                        <p class="spec">رعاية ما بعد العمليات</p>
-                        <p class="rating">⭐ 4.7 <span class="rev-count">(134 تقييم)</span></p>
-                        <p class="meta">📍 القاهرة، مدينة نصر | 🕒 15 سنة</p>
-                        <p class="price-status">● متاح الآن <span class="price">100 جنيه</span></p>
-                    </div>
-                    <div class="actions-side">
-                        <button class="btn-book" onclick="bookNow('احمد محمود حسين')">احجز الآن</button>
-                        <button class="btn-profile" onclick="viewProfile('احمد محمود حسين')">عرض الملف</button>
-                    </div>
-                </div>
+                    <div class="nurse-card" data-type="عام" data-name="فاطمة احمد حسن">
+                        <div class="image-side">
+                            <img src="../images/nurse-female.jpeg" alt="ممرضة" class="nurse-img">
+                        </div>
+                        <div class="details-side">
+                            <h3><?php echo $nurse['name']; ?></h3>
+                            <p class="spec" <?php echo $nurse['phone']; ?></p>
+                            <p class="rating">⭐ 4.9 <span class="rev-count">(156 تقييم)</span></p>
+                            <p class="meta">📍 القاهرة، مصر الجديدة | 🕒 <?php echo $nurse['experience']; ?> سنوات</p>
+                            <p class="price-status">● متاح الآن <span class="price">80 جنيه</span></p>
+                        </div>
+                        <div class="actions-side">
+                            <?php /*<button class="btn-book" onclick="bookNow('فاطمة احمد حسن')">احجز الآن</button>*/ ?>
 
-                <!-- بطاقة 5: مريم يوسف عبد الله -->
-                <div class="nurse-card" data-type="حالات_حرجة" data-name="مريم يوسف عبد الله">
-                    <div class="image-side">
-                        <img src="../images/nurse-female.jpeg" alt="ممرضة" class="nurse-img">
-                    </div>
-                    <div class="details-side">
-                        <h3>م. مريم يوسف عبد الله</h3>
-                        <p class="spec">تمريض الحالات الحرجة</p>
-                        <p class="rating">⭐ 4.9 <span class="rev-count">(156 تقييم)</span></p>
-                        <p class="meta">📍 القاهرة، مدينة نصر | 🕒 10 سنوات</p>
-                        <p class="price-status">● متاح الآن <span class="price">120 جنيه</span></p>
-                    </div>
-                    <div class="actions-side">
-                        <button class="btn-book" onclick="bookNow('مريم يوسف عبد الله')">احجز الآن</button>
-                        <button class="btn-profile" onclick="viewProfile('مريم يوسف عبد الله')">عرض الملف</button>
-                    </div>
-                </div>
+                            <form method="POST" style="display: inline;">
+                                <input type="hidden" name="action" value="book-visit">
+                                <input type="hidden" name="nurse_id" value="<?php echo $nurse['nurse_id']; ?>">
+                                <button type="submit" class="btn-book">احجز الآن</button>
+                            </form>
 
-                <!-- بطاقة 6: عمر طارق فتحي -->
-                <div class="nurse-card" data-type="عام" data-name="عمر طارق فتحي">
-                    <div class="image-side">
-                        <img src="../images/nurse-male.jpeg" alt="ممرض" class="nurse-img">
+                            <button class="btn-profile" onclick="viewProfile('فاطمة احمد حسن')">عرض الملف</button>
+                        </div>
                     </div>
-                    <div class="details-side">
-                        <h3>م. عمر طارق فتحي</h3>
-                        <p class="spec">تمريض منزلي عام</p>
-                        <p class="rating">⭐ 4.6 <span class="rev-count">(112 تقييم)</span></p>
-                        <p class="meta">📍 الإسكندرية، ميامي | 🕒 7 سنوات</p>
-                        <p class="price-status">● متاح الآن <span class="price">75 جنيه</span></p>
-                    </div>
-                    <div class="actions-side">
-                        <button class="btn-book" onclick="bookNow('عمر طارق فتحي')">احجز الآن</button>
-                        <button class="btn-profile" onclick="viewProfile('عمر طارق فتحي')">عرض الملف</button>
-                    </div>
-                </div>
+                <?php endforeach; ?>
 
-                <!-- بطاقة 7: هند رمضان صالح -->
-                <div class="nurse-card" data-type="الامومة و الطفولة" data-name="هند رمضان صالح">
-                    <div class="image-side">
-                        <img src="../images/nurse-female.jpeg" alt="ممرضة" class="nurse-img">
-                    </div>
-                    <div class="details-side">
-                        <h3>م. هند رمضان صالح</h3>
-                        <p class="spec">رعاية الامومة و الطفولة</p>
-                        <p class="rating">⭐ 4.8 <span class="rev-count">(167 تقييم)</span></p>
-                        <p class="meta">📍 القاهرة، الزمالك | 🕒 11 سنة</p>
-                        <p class="price-status">● متاح الآن <span class="price">95 جنيه</span></p>
-                    </div>
-                    <div class="actions-side">
-                        <button class="btn-book" onclick="bookNow('هند رمضان صالح')">احجز الآن</button>
-                        <button class="btn-profile" onclick="viewProfile('هند رمضان صالح')">عرض الملف</button>
-                    </div>
-                </div>
-                <!--بطاقة 8: سارة محمد عبداللة -->
-                <div class="nurse-card" data-type="السكري" data-name="سارة محمد عبداللة">
-                    <div class="image-side">
-                        <img src="../images/nurse-female.jpeg" alt="ممرضة" class="nurse-img">
-                    </div>
-                    <div class="details-side">
-                        <h3>م. سارة محمد عبداللة</h3>
-                        <p class="spec">رعاية الامومة و الطفولة</p>
-                        <p class="rating">⭐ 4.8 <span class="rev-count">(98 تقييم)</span></p>
-                        <p class="meta">📍 الجيزة، الدقي | 🕒 5 سنة</p>
-                        <p class="price-status">● متاح الآن <span class="price">90 جنيه</span></p>
-                    </div>
-                    <div class="actions-side">
-                        <button class="btn-book" onclick="bookNow('سارة محمد عبداللة')">احجز الآن</button>
-                        <button class="btn-profile" onclick="viewProfile('سارة محمد عبداللة')">عرض الملف</button>
-                    </div>
-                </div>
-
-                <!-- بطاقة 9:احمد خالد عمر -->
-                <div class="nurse-card" data-type="اطفال" data-name="احمد خالد عمر">
-                    <div class="image-side">
-                        <img src="../images/nurse-male.jpeg" alt="ممرض" class="nurse-img">
-                    </div>
-                    <div class="details-side">
-                        <h3>م. احمد خالد عمر</h3>
-                        <p class="spec">تمريض اطفال</p>
-                        <p class="rating">⭐ 4.7 <span class="rev-count">(145 تقييم)</span></p>
-                        <p class="meta">📍 القاهرة، مدينة نصر | 🕒 10 سنوات</p>
-                        <p class="price-status">● متاح الآن <span class="price">95 جنيه</span></p>
-                    </div>
-                    <div class="actions-side">
-                        <button class="btn-book" onclick="bookNow('احمد خالد عمر')">احجز الآن</button>
-                        <button class="btn-profile" onclick="viewProfile('احمد خالد عمر')">عرض الملف</button>
-                    </div>
-                </div>
-                <!-- بطاقة 10: عمر مصطفي السيد-->
-                <div class="nurse-card" data-type="الامومة و الطفولة" data-name="عمر مصطفي السيد">
-                    <div class="image-side">
-                        <img src="../images/nurse-male.jpeg" alt="ممرض" class="nurse-img">
-                    </div>
-                    <div class="details-side">
-                        <h3>م. عمر مصطفي السيد</h3>
-                        <p class="spec">رعاية الامومة و الطفولة</p>
-                        <p class="rating">⭐ 4.7 <span class="rev-count">(112 تقييم)</span></p>
-                        <p class="meta">📍 القاهرة، المعادي | 🕒 9 سنوات</p>
-                        <p class="price-status">● متاح الآن <span class="price">90 جنيه</span></p>
-                    </div>
-                    <div class="actions-side">
-                        <button class="btn-book" onclick="bookNow('عمر مصطفي السيد')">احجز الآن</button>
-                        <button class="btn-profile" onclick="viewProfile('عمر مصطفي السيد')">عرض الملف</button>
-                    </div>
-                </div>
-                <!--بطاقة 11: اية كمال عبدالرحمن -->
-                <div class="nurse-card" data-type="حالات_حرجة" data-name="اية كمال عبدالرحمن">
-                    <div class="image-side">
-                        <img src="../images/nurse-female.jpeg" alt="ممرضة" class="nurse-img">
-                    </div>
-                    <div class="details-side">
-                        <h3>م. اية كمال عبدالرحمن</h3>
-                        <p class="spec">حالات حرجة</p>
-                        <p class="rating">⭐ 4.8 <span class="rev-count">(87 تقييم)</span></p>
-                        <p class="meta">📍 الجيزة، فيصل | 🕒 6 سنة</p>
-                        <p class="price-status">● متاح الآن <span class="price">100 جنيه</span></p>
-                    </div>
-                    <div class="actions-side">
-                        <button class="btn-book" onclick="bookNow('اية كمال عبدالرحمن')">احجز الآن</button>
-                        <button class="btn-profile" onclick="viewProfile('اية كمال عبدالرحمن')">عرض الملف</button>
-                    </div>
-                </div>
-                <!-- بطاقة 12: كريم عادل محمد -->
-                <div class="nurse-card" data-type="السكري" data-name="كريم عادل محمد">
-                    <div class="image-side">
-                        <img src="../images/nurse-male.jpeg" alt="ممرض" class="nurse-img">
-                    </div>
-                    <div class="details-side">
-                        <h3>م. كريم عادل محمد</h3>
-                        <p class="spec">رعاية مرضي السكري</p>
-                        <p class="rating">⭐ 4.7 <span class="rev-count">(145 تقييم)</span></p>
-                        <p class="meta">📍 المنصورة، الجلاء | 🕒 9 سنوات</p>
-                        <p class="price-status">● متاح الآن <span class="price">85 جنيه</span></p>
-                    </div>
-                    <div class="actions-side">
-                        <button class="btn-book" onclick="bookNow('كريم عادل محمد')">احجز الآن</button>
-                        <button class="btn-profile" onclick="viewProfile('كريم عادل محمد')">عرض الملف</button>
-                    </div>
-                </div>
             </div>
         </main>
     </div>

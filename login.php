@@ -36,18 +36,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 //$_SESSION['user_phone'] = $user['phone'];
                 // $_SESSION['user_type'] => 'doctor','admin','user','patient','nurse','pharmacy','analysis laboratory'
 
-                if ($_SESSION['user_type'] == 'doctor') {
-                    header("Location: dashboards/doctor.php?lang=" . ($language ?? 'en'));
-                } else if ($_SESSION['user_type'] == 'admin') {
+                if ($_SESSION['user_type'] == 'admin') {
                     header("Location: dashboards/admin.php?lang=" . ($language ?? 'en'));
-                } else if ($_SESSION['user_type'] == 'nurse') {
-                    header("Location: dashboards/nurse.php?lang=" . ($language ?? 'en'));
-                } else if ($_SESSION['user_type'] == 'pharmacy') {
-                    header("Location: dashboards/pharmacy.php?lang=" . ($language ?? 'en'));
-                } else if ($_SESSION['user_type'] == 'analysis laboratory') {
-                    header("Location: dashboards/laboratory.php?lang=" . ($language ?? 'en'));
                 } else {
+                    /*if ($_SESSION['user_type'] == 'doctor') {
+                       header("Location: dashboards/doctor.php?lang=" . ($language ?? 'en'));
+                    } else if ($_SESSION['user_type'] == 'admin') {
+                        header("Location: dashboards/admin.php?lang=" . ($language ?? 'en'));
+                    } else if ($_SESSION['user_type'] == 'nurse') {
+                        header("Location: dashboards/nurse.php?lang=" . ($language ?? 'en'));
+                    } else if ($_SESSION['user_type'] == 'pharmacy') {
+                        header("Location: dashboards/pharmacy.php?lang=" . ($language ?? 'en'));
+                    } else if ($_SESSION['user_type'] == 'analysis laboratory') {
+                        header("Location: dashboards/laboratory.php?lang=" . ($language ?? 'en'));
+                    } else {*/
                     header("Location: index.php?lang=" . ($language ?? 'en'));
+                    ///}
                 }
                 exit();
             }

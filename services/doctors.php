@@ -13,6 +13,80 @@ if (isset($_GET['spec']) && !empty($_GET['spec'])) {
     $specFilter = $_GET['spec'];
 }
 
+$error = "";
+$isReserved = false;
+$doctorIdForInvoice = null;
+$doctorSpecialtyForInvoice = null;
+$invoiceNumber = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['action'] === 'book-visit') {
+
+    // 1. Check if the user is logged in
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'message' => 'User session not found.']);
+        exit;
+    }
+
+    $userId = $_SESSION['user_id'];
+    $doctorId = $_POST['doctor_id'];
+    $currentDate = date('Y-m-d');
+
+    try {
+        // 2. Find or Create the Patient Profile
+        $patientStmt = $pdo->prepare("SELECT patient_id FROM patient WHERE user_id = ?");
+        $patientStmt->execute([$userId]);
+        $patient = $patientStmt->fetch();
+
+        if (!$patient) {
+            // Get user's name to create the patient profile
+            $userStmt = $pdo->prepare("SELECT name FROM user WHERE user_id = ?");
+            $userStmt->execute([$userId]);
+            $userData = $userStmt->fetch();
+            $userName = $userData ? $userData['name'] : 'New Patient';
+
+            // Insert new patient profile
+            $insertPatient = $pdo->prepare("INSERT INTO patient (user_id, name, deleted) VALUES (?, ?, '0')");
+            $insertPatient->execute([$userId, $userName]);
+
+            // Get the newly created patient_id
+            $patientId = $pdo->lastInsertId();
+        } else {
+            $patientId = $patient['patient_id'];
+        }
+
+        // 3. Check for future visits using the patientId
+        $checkVisit = $pdo->prepare("SELECT COUNT(*) FROM `visiting a doctor` WHERE patient_id = ? AND DATE(visit_time) >= ? AND is_deleted = 0");
+        $checkVisit->execute([$patientId, $currentDate]);
+
+        if ($checkVisit->fetchColumn() > 0) {
+            $error =  'لديك زيارة مستقبلة مسجلة بالفعل !. لا يمكنك حجز أكثر من زيارة في نفس الوقت.';
+        } else {
+            // 4. Insert the visit
+            $fullTimestamp = date('Y-m-d H:i:s');
+            $insertVisit = $pdo->prepare("INSERT INTO `visiting a doctor` (diagnosis, patient_id, doctor_id, visit_time) VALUES (?, ?, ?, ?)");
+            $result = $insertVisit->execute(['Pending Examination', $patientId, $doctorId, $fullTimestamp]);
+
+            $invoiceNumber = $pdo->lastInsertId(); // Use the visit ID as the invoice number for simplicity
+
+            if ($result) {
+                $isReserved = true;
+                $error = 'تم حجز زيارتك بنجاح! يمكنك عرض تفاصيل الحجز في ملفك الشخصي.';
+                $doctorIdForInvoice = $doctorId;
+                // Get doctor's specialty for invoice display
+
+                $specStmt = $pdo->prepare("SELECT name, specialization FROM doctor WHERE doctor_id = ?");
+                $specStmt->execute([$doctorId]);
+                $specData = $specStmt->fetch();
+                $doctorSpecialtyForInvoice = $specData ? $specData['specialization'] : 'General';
+                $doctorNameForInvoice = $specData ? $specData['name'] : 'Dr. Unknown';
+            } else {
+                $error = 'حدث خطأ أثناء حجز زيارتك. يرجى المحاولة مرة أخرى.';
+            }
+        }
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+    }
+}
+
 $specQuery = $pdo->prepare("SELECT DISTINCT specialization FROM doctor");
 $specQuery->execute();
 $specializations = $specQuery->fetchAll(PDO::FETCH_ASSOC);
@@ -105,6 +179,12 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                 </section>
 
+                <?php if (isset($error) && !empty($error)): ?>
+                    <div class="card" style="background: #f8d7da; color: #721c24; margin-bottom: 20px;">
+                        <?php echo htmlspecialchars($error); ?>
+                    </div>
+                <?php endif; ?>
+
                 <!-- شبكة بطاقات الأطباء -->
                 <div class="doctor-grid" id="doctorGrid">
 
@@ -126,12 +206,23 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
                                 <p class="price-status">● <?php echo $doc['delivery_service']; ?> <span class="price">500 جنيه</span></p>
                             </div>
                             <div class="actions-side">
+
+
+                                <form method="POST" style="display: inline;">
+                                    <input type="hidden" name="action" value="book-visit">
+                                    <input type="hidden" name="doctor_id" value="<?php echo $doc['doctor_id']; ?>">
+                                    <button type="submit" class="btn-book">احجز الآن</button>
+                                </form>
+
+                                <?php
+                                /*
                                 <button class="btn-book" onclick="bookNow(
                                     <?php echo $doc['doctor_id']; ?>,
                                     '<?php echo addslashes($doc['name']); ?>', 
                                     '<?php echo $doc['specialization']; ?>', 
                                     '<?php echo $doc['work_shift']; ?>'
                                 )">احجز الآن</button>
+                                */ ?>
                                 <button class="btn-profile" onclick="viewProfile(
                                 <?php echo $doc['doctor_id']; ?>,
                                 '<?php echo addslashes($doc['name']); ?>',
@@ -203,6 +294,12 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                 </section>
 
+                <?php if (isset($error) && !empty($error)): ?>
+                    <div class="card" style="background: #f8d7da; color: #721c24; margin-bottom: 20px;">
+                        <?php echo htmlspecialchars($error); ?>
+                    </div>
+                <?php endif; ?>
+
                 <!-- شبكة بطاقات الأطباء -->
                 <div class="doctor-grid" id="doctorGrid">
                     <?php foreach ($doctors as $doc): ?>
@@ -223,12 +320,19 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
                                 <p class="price-status">● <?php echo $doc['delivery_service']; ?> <span class="price">500 جنيه</span></p>
                             </div>
                             <div class="actions-side">
-                                <button class="btn-book" onclick="bookNow(
+
+                                <form method="POST" style="display: inline;">
+                                    <input type="hidden" name="action" value="book-visit">
+                                    <input type="hidden" name="doctor_id" value="<?php echo $doc['doctor_id']; ?>">
+                                    <button type="submit" class="btn-book">احجز الآن</button>
+                                </form>
+
+                                <?php /*<button class="btn-book" onclick="bookNow(
                                     <?php echo $doc['doctor_id']; ?>,
                                     '<?php echo addslashes($doc['name']); ?>', 
                                     '<?php echo $doc['specialization']; ?>', 
                                     '<?php echo $doc['work_shift']; ?>'
-                                )">احجز الآن</button>
+                                )">احجز الآن</button>*/ ?>
                                 <button class="btn-profile" onclick="viewProfile(
                                 <?php echo $doc['doctor_id']; ?>,
                                 '<?php echo addslashes($doc['name']); ?>',
@@ -277,12 +381,48 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
     </div>
     <!-- ========= نهاية البوت ========= -->
 
-    <div id="invoiceModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close-modal" id="closeInvoiceBtn">&times;</span>
-            <div id="invoiceDetails"></div>
+    <?php if ($isReserved): ?>
+        <div id="invoiceModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal" id="closeInvoiceBtn">&times;</span>
+                <div id="invoiceDetails">
+                    <div class="invoice-icon">🧾</div>
+                    <h2>تأكيد الحجز</h2>
+                    <div class="doctor-name">د. <?php echo $doctorNameForInvoice; ?></div>
+                    <div class="doctor-spec" style="color: #666; margin-bottom: 10px;"><?php echo $doctorSpecialtyForInvoice; ?></div>
+                    <div class="visit-date">📅 موعد الكشف: حسب جدول الطبيب</div>
+                    <div class="visit-time">🕒 الفترة: </div>
+                    <div class="confirm-msg">✅ تم تسجيل طلب حجزك بنجاح 😊</div>
+                    <div class="payment-note">
+                        <strong>💰 الدفع:</strong> يتم دفع قيمة الكشف نقداً <strong>عند موعد الكشف</strong> في العيادة.
+                    </div>
+                    <div class="invoice-footer">
+                        <p>رقم الحجز: # <?php echo $invoiceNumber; ?></p>
+                        <p>شكراً لثقتك في موقع صحتك</p>
+                    </div>
+                    <button class="btn-close-invoice" onclick="closeInvoice()">إغلاق</button>
+                </div>
+            </div>
         </div>
-    </div>
+
+        <script>
+            // عرض المودال تلقائياً عند الحجز
+            document.getElementById('invoiceModal').style.display = 'flex';
+
+            // إغلاق المودال عند الضغط على زر الإغلاق
+            document.getElementById('closeInvoiceBtn').onclick = function() {
+                document.getElementById('invoiceModal').style.display = 'none';
+            }
+
+            // إغلاق المودال عند النقر خارج محتوى الفاتورة
+            window.onclick = function(event) {
+                if (event.target == document.getElementById('invoiceModal')) {
+                    document.getElementById('invoiceModal').style.display = 'none';
+                }
+            }
+        </script>
+    <?php endif; ?>
+
 
     <!-- كود الجافا سكريبت (الوظائف الأساسية + البوت) -->
     <script>
@@ -381,9 +521,6 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
         function bookNows(name) {
             alert("تم إلغاء طلب الحجز للدكتور " + name + " بنجاح!");
         }
-
-
-
         // ----- دالة إنشاء صفحة الملف الشخصي -----
 
         /*
@@ -570,7 +707,7 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
 
             if (e.target === modal) closeInvoice();
 
-        });
+        })
     </script>
 
 </body>

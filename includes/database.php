@@ -1,6 +1,6 @@
 <?php
 
-$host = "localhost";
+$host = "localhost"; // 127.0.0.1
 $username = "root";
 $password = "";
 $dbname = "sehatak-new-db";

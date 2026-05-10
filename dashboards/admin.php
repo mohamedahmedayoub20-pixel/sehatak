@@ -89,6 +89,55 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } catch (PDOException $e) {
             $error = "خطأ في القاعدة: " . $e->getMessage();
         }
+    } else if ($action == 'update-user-type') {
+        $userId = $_POST['userId'];
+        $newType = $_POST['userType'];
+
+        try {
+            // 1. Define the mapping between account_type and the database table name
+            $typeToTable = [
+                'doctor'              => 'doctor',
+                'nurse'               => 'nurse',
+                'patient'             => 'patient',
+                'pharmacy'            => 'pharmacy',
+                'analysis laboratory' => 'analysis laboratory' // Note: underscore for DB table name
+            ];
+
+            // 2. If the new type is one of the specialized roles, check/insert profile
+            if (array_key_exists($newType, $typeToTable)) {
+                $tableName = $typeToTable[$newType];
+
+                // Check if profile exists in the specific table
+                $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM `$tableName` WHERE user_id = ?");
+                $checkStmt->execute([$userId]);
+                $exists = $checkStmt->fetchColumn();
+
+                if (!$exists) {
+                    // Get the user's name to populate the new profile
+                    $userStmt = $pdo->prepare("SELECT name FROM user WHERE user_id = ?");
+                    $userStmt->execute([$userId]);
+                    $userData = $userStmt->fetch();
+                    $userName = $userData ? $userData['name'] : 'New Profile';
+
+                    // Insert into the corresponding table
+                    // Using backticks for table name to handle spaces/reserved words safely
+                    $insertStmt = $pdo->prepare("INSERT INTO `$tableName` (user_id, name, deleted) VALUES (?, ?, '0')");
+                    $insertStmt->execute([$userId, $userName]);
+                }
+            }
+
+            // 3. Update the main user table
+            $stmt = $pdo->prepare("UPDATE user SET account_type = ? WHERE user_id = ?");
+            $result = $stmt->execute([$newType, $userId]);
+
+            if ($result) {
+                $error = '';
+            } else {
+                $error = "Failed to update user type";
+            }
+        } catch (PDOException $e) {
+            $error = "خطأ في القاعدة: " . $e->getMessage();
+        }
     } else {
         $error = "Unknown action";
     }
@@ -103,6 +152,35 @@ $userQuery = $pdo->prepare("SELECT user_id,name,email,address,account_type,accou
 FROM user");
 $userQuery->execute();
 $users = $userQuery->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch all types of visits (Doctor, Nurse, Lab) as "Orders"
+$ordersQuery = $pdo->prepare("
+    SELECT 'doctor' as type, v.`visiting_a_ doctor_id` as id, u.name as patient_name, d.name as provider_name, v.visit_time, v.is_deleted
+    FROM `visiting a doctor` v
+    JOIN patient p ON v.patient_id = p.patient_id
+    JOIN user u ON p.user_id = u.user_id
+    JOIN doctor d ON v.doctor_id = d.doctor_id
+    
+    UNION ALL
+    
+    SELECT 'nurse' as type, n_v.`visiting_a_ nurse_id` as id, u.name as patient_name, n.name as provider_name, n_v.visit_time, n_v.is_deleted
+    FROM `visiting a nurse` n_v
+    JOIN patient p ON n_v.patient_id = p.patient_id
+    JOIN user u ON p.user_id = u.user_id
+    JOIN nurse n ON n_v.nurse_id = n.nurse_id
+    
+    UNION ALL
+    
+    SELECT 'lab' as type, l_v.`visiting_the_analysis_laboratory_id` as id, u.name as patient_name, al.name as provider_name, l_v.visit_time, 0 as is_deleted
+    FROM `visiting the analysis laboratory` l_v
+    JOIN patient p ON l_v.patient_id = p.patient_id
+    JOIN user u ON p.user_id = u.user_id
+    JOIN `analysis laboratory` al ON l_v.analysis_laboratory_id = al.analysis_laboratory_id
+    
+    ORDER BY visit_time DESC
+");
+$ordersQuery->execute();
+$allOrders = $ordersQuery->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 
@@ -384,7 +462,7 @@ $users = $userQuery->fetchAll(PDO::FETCH_ASSOC);
                                     </span>
                                 </td>
                                 <td>
-                                    <button class="btn btn-edit" onclick="editUser(<?php echo htmlspecialchars($row['user_id']); ?>)">تعديل</button>
+                                    <button class="btn btn-edit" onclick="editUser(<?php echo htmlspecialchars($row['user_id']); ?>, '<?php echo htmlspecialchars($row['name']); ?>')">تعديل</button>
                                     <button class="btn btn-status" onclick="toggleUser(<?php echo htmlspecialchars($row['user_id']); ?>, '<?php echo htmlspecialchars($row['name']); ?>')">
                                         تغيير الحالة
                                     </button>
@@ -434,22 +512,47 @@ $users = $userQuery->fetchAll(PDO::FETCH_ASSOC);
         <div id="orders-section" class="content-section">
             <div class="card">
                 <div class="card-header">
-                    <h3>قائمة الطلبات</h3>
-                    <button class="btn btn-add" onclick="openOrderModal()">+ إضافة طلب جديد</button>
+                    <h3>قائمة الزيارات والطلبات (أطباء، ممرضين، معامل)</h3>
                 </div>
                 <table>
                     <thead>
                         <tr>
-                            <th>رقم الطلب</th>
-                            <th>اسم العميل</th>
-                            <th>المنتج/الخدمة</th>
-                            <th>التاريخ</th>
+                            <th>النوع</th>
+                            <th>اسم المريض</th>
+                            <th>مقدم الخدمة</th>
+                            <th>التاريخ والوقت</th>
                             <th>الحالة</th>
-                            <th>التحكم</th>
+                            <!--<th>التحكم</th>-->
                         </tr>
                     </thead>
-                    <tbody id="ordersTableBody">
-                        <!-- يتم ملؤه بواسطة JS -->
+                    <tbody>
+                        <?php foreach ($allOrders as $order): ?>
+                            <tr class="<?php echo ($order['is_deleted'] != 0) ? 'disabled-user' : ''; ?>">
+                                <td>
+                                    <?php
+                                    if ($order['type'] == 'doctor') echo "زيارة طبيب";
+                                    elseif ($order['type'] == 'nurse') echo "زيارة ممرض";
+                                    else echo "تحليل معمل";
+                                    ?>
+                                </td>
+                                <td><?php echo htmlspecialchars($order['patient_name']); ?></td>
+                                <td><?php echo htmlspecialchars($order['provider_name']); ?></td>
+                                <td><?php echo htmlspecialchars($order['visit_time']); ?></td>
+                                <td>
+                                    <span class="status-badge <?php echo ($order['is_deleted'] == 0) ? 'status-active' : 'status-disabled'; ?>">
+                                        <?php echo ($order['is_deleted'] == 0) ? 'نشط' : 'ملغي'; ?>
+                                    </span>
+                                </td>
+                                <?php /*<td>
+                                    <button class="btn btn-delete" onclick="alert('حذف الطلب رقم: <?php echo $order['id']; ?>')">إلغاء الزيارة</button>
+                                </td>*/ ?>
+                            </tr>
+                        <?php endforeach; ?>
+                        <?php if (empty($allOrders)): ?>
+                            <tr>
+                                <td colspan="6" style="text-align:center;">لا توجد طلبات حالياً</td>
+                            </tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -551,6 +654,36 @@ $users = $userQuery->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
+    <div id="userTypeChangeModal" class="modal">
+        <div class="modal-content" style="width: 500px;">
+            <h3 id="userTypeChangeModalTitle">تغيير نوع الحساب</h3>
+            <hr><br>
+
+            <form method="POST" id="userTypeForm">
+                <input type="hidden" name="action" id="typeFormAction" value="update-user-type">
+                <input type="hidden" name="userId" id="typeFormUserId" value="">
+
+                <div class="account-box" style="margin-bottom: 20px;">
+                    <h3>نوع الحساب</h3>
+                    <select name="userType" id="userType" style="width: 100%; padding: 8px;" required>
+                        <option value="" disabled selected>اختر النوع...</option>
+                        <option value="doctor">طبيب</option>
+                        <option value="nurse">ممرض</option>
+                        <option value="pharmacy">صيدليه</option>
+                        <option value="analysis laboratory">معمل تحاليل</option>
+                        <option value="patient">مريض</option>
+                        <option value="admin">مسؤل</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-add">حفظ البيانات</button>
+                    <button type="button" class="btn btn-delete" onclick="closeModal('userTypeChangeModal')">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal الطلبات -->
     <div id="orderModal" class="modal">
         <div class="modal-content">
@@ -633,14 +766,10 @@ $users = $userQuery->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('userModal').style.display = 'flex';
         }
 
-        function editUser(id) {
-            const user = users.find(u => u.id === id);
-            editUserId = id;
-            document.getElementById('userModalTitle').innerText = "تعديل مستخدم";
-            document.getElementById('userName').value = user.name;
-            document.getElementById('userEmail').value = user.email;
-            document.getElementById('userRole').value = user.role;
-            document.getElementById('userModal').style.display = 'flex';
+        function editUser(userId, userName) {
+            document.getElementById('userTypeChangeModalTitle').innerText = "تغيير حالة المستخدم: " + userName;
+            document.getElementById('typeFormUserId').value = userId;
+            document.getElementById('userTypeChangeModal').style.display = 'flex';
         }
 
         function saveUser() {

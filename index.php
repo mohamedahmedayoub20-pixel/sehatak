@@ -117,6 +117,25 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'ar'])) {
                 <!--<a href="index.php">الرئيسية</a>
                 <a href="services.php">الخدمات</a>
                 <a href="#">الأطباء</a>-->
+                <?php if (isLoggedIn()): ?>
+                    <?php
+                    // $_SESSION['user_type'] => 'doctor','admin','user','patient','nurse','pharmacy','analysis laboratory'
+
+                    $user_type = $_SESSION['user_type'];
+                    $url_lang = "?lang=" . $language;
+
+                    if ($user_type === 'doctor') { ?>
+                        <a class="btn-sehatak" href="dashboards/doctor.php<?php echo $url_lang; ?>">لوحة الدكتور</a>
+                    <?php } elseif ($user_type === 'pharmacy') { ?>
+                        <a class="btn-sehatak" href="dashboards/pharmacy.php<?php echo $url_lang; ?>">لوحة الصيدلي</a>
+                    <?php } elseif ($user_type === 'nurse') { ?>
+                        <a class="btn-sehatak" href="dashboards/nurse.php<?php echo $url_lang; ?>">لوحة الممرض</a>
+                    <?php } elseif ($user_type === 'analysis laboratory') { ?>
+                        <a class="btn-sehatak" href="dashboards/laboratory.php<?php echo $url_lang; ?>">لوحة المختبر</a>
+                    <?php } elseif ($user_type === 'patient') { ?>
+                        <a class="btn-sehatak" href="visits.php<?php echo $url_lang; ?>">زياراتي</a>
+                    <?php } ?>
+                <?php endif; ?>
 
                 <a class="btn-sehatak" href="sehatak-vision.html">رؤيتنا</a>
                 <a class="btn-sehatak btn-vision" href="about.html">من نحن</a>
@@ -143,7 +162,7 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'ar'])) {
                     <a href="logout.php?lang=<?php echo $language ?>" class="btn btn-logout">تسجيل الخروج</a>
                 <?php else: ?>
                     <a href="#" class="btn btn-guest">تصفح الموقع</a>
-                    <a href="login.php?lang=<?php echo $language ?>" class="btn btn-login">دخول المرضى</a>
+                    <a href="login.php?lang=<?php echo $language ?>" class="btn btn-login">تسجيل الدخول</a>
                 <?php endif; ?>
             </div>
         </header>
@@ -208,6 +227,26 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'ar'])) {
                 <!--<a href="index.php">Home</a>
                 <a href="services.php">Services</a>
                 <a href="#">Doctors</a>-->
+                <?php if (isLoggedIn()): ?>
+                    <?php
+                    // $_SESSION['user_type'] => 'doctor','admin','user','patient','nurse','pharmacy','analysis laboratory'
+
+                    $user_type = $_SESSION['user_type'];
+                    $url_lang = "?lang=" . $language;
+
+                    if ($user_type === 'doctor') { ?>
+                        <a class="btn-sehatak" href="dashboards/doctor.php<?php echo $url_lang; ?>">Doctor Dashboard</a>
+                    <?php } elseif ($user_type === 'pharmacy') { ?>
+                        <a class="btn-sehatak" href="dashboards/pharmacy.php<?php echo $url_lang; ?>">Pharmacy Dashboard</a>
+                    <?php } elseif ($user_type === 'nurse') { ?>
+                        <a class="btn-sehatak" href="dashboards/nurse.php<?php echo $url_lang; ?>">Nurse Dashboard</a>
+                    <?php } elseif ($user_type === 'analysis laboratory') { ?>
+                        <a class="btn-sehatak" href="dashboards/laboratory.php<?php echo $url_lang; ?>">Laboratory Dashboard</a>
+                    <?php } elseif ($user_type === 'patient') { ?>
+                        <a class="btn-sehatak" href="visits.php<?php echo $url_lang; ?>">Visits</a>
+                    <?php } ?>
+                <?php endif; ?>
+
                 <a class="btn-sehatak btn-vision" href="sehatak-vision.html">Our Vision</a>
                 <a class="btn-sehatak" href="about.html">About Us</a>
             </nav>
@@ -229,7 +268,7 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'ar'])) {
                     <a href="logout.php" class="btn btn-logout">Logout</a>
                 <?php else: ?>
                     <a href="#" class="btn btn-guest">Browse Website</a>
-                    <a href="login.php" class="btn btn-login">Patient Login</a>
+                    <a href="login.php" class="btn btn-login">Login</a>
                 <?php endif; ?>
             </div>
         </header>

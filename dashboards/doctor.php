@@ -1,457 +1,404 @@
 <?php
 include "../includes/auth.php";
+include "../includes/database.php";
 
-$language = "ar";
+// 1. Language Logic
+$language = "ar"; // Default
 if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'ar'])) {
     $language = $_GET['lang'];
 }
 
+// 2. Translation Dictionary
+$lang_data = [
+    'en' => [
+        'title' => 'Doctor Management - Dashboard',
+        'welcome' => 'Welcome, ',
+        'logout' => 'Logout',
+        'dashboard' => 'Dashboard',
+        'my_reservations' => 'My Reservations',
+        'clinic_settings' => 'Clinic Settings',
+        'profile' => 'Profile',
+        'current_records' => 'Current Records',
+        'search' => 'Search...',
+        'name' => 'Name',
+        'phone' => 'Phone Number',
+        'diagnosis' => 'Diagnosis',
+        'time' => 'Time',
+        'control' => 'Control',
+        'upcoming_today' => 'Upcoming Reservations for Today',
+        'no_visits' => 'No new reservations today.',
+        'specialist' => 'Cardiology Specialist',
+        'address' => 'Address',
+        'exp' => 'Years of Experience',
+        'years' => 'Years',
+        'working_hours' => 'Working Hours',
+        'fees' => 'Consultation Fees',
+        'currency' => 'EGP',
+        'edit_data' => 'Edit Data',
+        'preview' => 'Preview Clinic',
+        'account_data' => 'Personal Account Data',
+        'email' => 'Email',
+        'password' => 'Password',
+        'bio' => 'Bio (Visible to patients)',
+        'save' => 'Save Changes',
+        'warning' => 'Updating this data will change how you appear in patient searches.',
+        'notifications' => 'Notifications',
+        'clear_all' => 'Clear All'
+    ],
+    'ar' => [
+        'title' => 'إدارة الدكتور - لوحة التحكم',
+        'welcome' => 'مرحباً بك، ',
+        'logout' => 'تسجيل الخروج',
+        'dashboard' => 'لوحة التحكم',
+        'my_reservations' => 'حجوزاتي',
+        'clinic_settings' => 'إعدادات العيادة',
+        'profile' => 'الملف الشخصي',
+        'current_records' => 'السجل الحالي',
+        'search' => 'بحث...',
+        'name' => 'الاسم',
+        'phone' => 'رقم الهاتف',
+        'diagnosis' => 'التشخيص',
+        'time' => 'الوقت',
+        'control' => 'تحكم',
+        'upcoming_today' => 'قائمة الحجوزات القادمة لليوم',
+        'no_visits' => 'لا توجد حجوزات جديدة اليوم.',
+        'specialist' => 'اخصائي قلب',
+        'address' => 'العنوان',
+        'exp' => 'سنوات الخبرة',
+        'years' => 'سنة',
+        'working_hours' => 'مواعيد العمل',
+        'fees' => 'حساب الكشف',
+        'currency' => 'جنيه',
+        'edit_data' => 'تعديل البيانات',
+        'preview' => 'معاينة العيادة',
+        'account_data' => 'بيانات الحساب الشخصي',
+        'email' => 'البريد الإلكتروني',
+        'password' => 'كلمة المرور',
+        'bio' => 'نبذة تعريفية (تظهر للمرضى)',
+        'save' => 'حفظ التغييرات',
+        'warning' => 'تحديث هذه البيانات سيؤدي إلى تغيير طريقة ظهورك في بحث المرضى.',
+        'notifications' => 'التنبيهات',
+        'clear_all' => 'مسح الكل'
+    ]
+];
 
-// $_SESSION['user_type'] => 'doctor','admin','user','patient','nurse','pharmacy','analysis laboratory'
+$t = $lang_data[$language]; // Shortcut for translation array
 
+// 3. Auth & Database Logic
 if ($_SESSION['user_type'] !== 'doctor' && $_SESSION['user_type'] !== 'admin') {
     header("Location: ../index.php?lang=$language");
     exit();
 }
 
+$sql = "SELECT 
+            `visiting a doctor`.`diagnosis`, 
+            `patient`.`name` AS patient_name, 
+            `patient`.`phone_number` AS patient_phone,
+            `doctor`.`name` AS doctor_name, 
+            `visiting a doctor`.`visit_time`
+        FROM `visiting a doctor`
+        JOIN `doctor` ON `doctor`.`doctor_id` = `visiting a doctor`.`doctor_id` 
+        JOIN `patient` ON `patient`.`patient_id` = `visiting a doctor`.`patient_id`
+        JOIN `user` ON `user`.`user_id` = `doctor`.`user_id`
+        WHERE `user`.`user_id` = :user_id";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute(['user_id' => $_SESSION['user_id']]);
+$visits = $stmt->fetchAll();
+
+$todaysVisits = array_filter($visits, function ($visit) {
+    $visitDate = new DateTime($visit['visit_time']);
+    $today = new DateTime();
+    return $visitDate->format('Y-m-d') === $today->format('Y-m-d');
+});
 ?>
 
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="<?php echo $language; ?>" dir="<?php echo ($language == 'ar') ? 'rtl' : 'ltr'; ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- عنوان الصفحة -->
-    <title>إدارة الدكتور</title>
+    <title><?php echo $t['title']; ?></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* إعادة تعيين الهوامش والحشوات لجميع العناصر */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            /* الخط الافتراضي */
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap');
 
-        /* تنسيق جسم الصفحة */
         body {
-            background-color: #f4f7fa;
-            /* خلفية رمادية فاتحة */
-            direction: rtl;
-            /* اتجاه النص من اليمين لليسار */
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f8fafc;
         }
 
-        /* الشريط العلوي */
-        .top-bar {
-            background: white;
-            /* خلفية بيضاء */
-            padding: 20px 40px;
-            /* حشوة داخلية علوية/سفلية 20px وجانبية 40px */
+        .nav-item-active {
+            background-color: #4ade80;
+            color: white;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            height: 18px;
+            width: 18px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
             display: flex;
-            /* ترتيب مرن */
-            justify-content: space-between;
-            /* توزيع العناصر يميناً ويساراً */
             align-items: center;
-            /* محاذاة عمودية في المنتصف */
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-            /* ظل خفيف */
-        }
-
-        /*تنسيق عنوان الصفحة داخل الشريط العلوي*/
-        .top-bar h2 {
-            font-size: 22px;
-            /* حجم الخط */
-            color: #1e2b3c;
-            /* لون داكن */
-        }
-
-        /*تنسيق الرسالة الترحبية*/
-        .welcome {
-            color: #555;
-            /* لون رمادي */
-        }
-
-        /* الحاوية الرئيسية */
-        .container {
-            width: 95%;
-            /* عرض 95% من الشاشة */
-            margin: 30px auto;
-        }
-
-        /* (ادخال البيانات)قسم النموذج */
-        .form-section {
-            background: white;
-            /* خلفية بيضاء */
-            padding: 30px;
-            border-radius: 10px;
-            /* زوايا مدورة */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            /* ظل خفيف */
-            margin-bottom: 30px;
-            /* مسافة سفلية */
-        }
-
-        /* (ترتيب المدخلات في صفوف و اعمدة)شبكة الحقول */
-        .form-grid {
-            display: grid;
-            /* استخدام الشبكة */
-            grid-template-columns: repeat(3, 1fr);
-            /* ثلاثة أعمدة متساوية */
-            gap: 15px;
-            margin-bottom: 20px;
-            /* مسافة سفلية */
-        }
-
-        /* تنسيق حقول الإدخال داخل الشبكة */
-        .form-grid input {
-            padding: 8px 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            /* زوايا مدورة قليلاً */
-            font-size: 13px;
-            /* حجم الخط */
-            height: 35px;
-            /* ارتفاع ثابت */
-        }
-
-        /* خانة الاختيار (checkbox) */
-        .checkbox-box {
-            display: flex;
-            /* ترتيب مرن */
-            align-items: center;
-            /* محاذاة عمودية في المنتصف */
-            font-size: 13px;
-            /* حجم الخط */
-        }
-
-        /* زر الإضافة */
-        .add-btn {
-            width: 100%;
-            /* عرض كامل */
-            padding: 14px;
-            background-color: #4caf50;
-            /* خلفية خضراء */
-            color: white;
-            /* نص أبيض */
-            border: none;
-            /* بلا حدود */
-            border-radius: 8px;
-            /* زوايا مدورة */
-            font-size: 15px;
-            /* حجم الخط */
-            cursor: pointer;
-            /* مؤشر يد */
-        }
-
-        /* لون أغمق عند التمرير */
-        .add-btn:hover {
-            background-color: #45a049;
-        }
-
-        /* قسم الجدول */
-        .table-section {
-            background: white;
-            /* خلفية بيضاء */
-            padding: 25px;
-            border-radius: 10px;
-            /* زوايا مدورة */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            /* ظل خفيف */
-        }
-
-        /* تنسيق الجدول */
-        table {
-            width: 100%;
-            /* عرض كامل */
-            border-collapse: collapse;
-            /* إلغاء التباعد بين الخلايا */
-            table-layout: fixed;
-            /* توزيع ثابت للأعمدة */
-            text-align: center;
-            /* توسيط النص */
-        }
-
-        /* تنسيق خلايا الرأس */
-        table th {
-            background-color: #f8f9fa;
-            /* خلفية رمادية فاتحة جداً */
-            padding: 10px;
-            border-bottom: 1px solid #dee2e6;
-            font-size: 13px;
-            /* حجم الخط */
-            text-align: center;
-            /* توسيط النص */
-            vertical-align: middle;
-            /* محاذاة عمودية في المنتصف */
-            word-wrap: break-word;
-            /* كسر الكلمات الطويلة */
-        }
-
-        /* تنسيق خلايا البيانات */
-        table td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            /* حد سفلي رمادي فاتح */
-            font-size: 13px;
-            /* حجم الخط */
-        }
-
-        /* الصف المحذوف (يظهر باللون الأحمر الفاتح) */
-        .deleted-row {
-            background-color: #f8d7da;
-            /* خلفية وردية/حمراء */
-        }
-
-        /* زر التعديل */
-        .edit {
-            background-color: orange;
-            /* برتقالي */
-            color: white;
-            /* نص أبيض */
-            border: none;
-            /* بلا حدود */
-            padding: 5px 10px;
-            border-radius: 6px;
-            /* زوايا مدورة */
-            cursor: pointer;
-            /* مؤشر يد */
-        }
-
-        /* زر الحذف */
-        .delete {
-            background-color: red;
-            /* أحمر */
-            color: white;
-            /* نص أبيض */
-            border: none;
-            /* بلا حدود */
-            padding: 5px 10px;
-            border-radius: 6px;
-            /* زوايا مدورة */
-            cursor: pointer;
-            /* مؤشر يد */
-        }
-    </style>
-
-    <style>
-        .btn {
-            padding: 8px 20px;
-            border-radius: 5px;
-            text-decoration: none;
+            justify-content: center;
+            font-size: 10px;
             font-weight: bold;
-            transition: 0.3s;
+            border: 2px solid white;
         }
 
-        .btn-logout {
-            background: #be2525;
-            color: white;
+        .custom-shadow {
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
 
-<body>
-    <!-- الشريط العلوي (الهيدر) -->
-    <div class="top-bar">
-        <h2>إدارة الدكتور</h2>
-        <?php if (isLoggedIn()): ?>
-            <div class="welcome">مرحباً بك ي دكتور <?php echo $_SESSION['user_name']; ?>
-                <a href="../logout.php?lang=<?php echo $language ?>" class="btn btn-logout">تسجيل الخروج</a>
-            </div>
-        <?php endif; ?>
-    </div>
-    <!-- الحاوية الرئيسية -->
-    <div class="container">
-        <!-- قسم نموذج الإدخال -->
-        <div class="form-section">
+<body class="bg-slate-50 min-h-screen">
 
-            <!-- شبكة حقول النموذج (grid) -->
-            <div class="form-grid">
-                <!-- حقل الاسم -->
-                <input type="text" id="name" placeholder="الاسم">
-                <!-- حقل رقم الهاتف -->
-                <input type="text" id="phone" placeholder="رقم الهاتف">
-                <!-- حقل وردية العمل -->
-                <input type="text" id="shift" placeholder="وردية العمل">
-                <!-- حقل الجنس -->
-                <input type="text" id="gender" placeholder="الجنس">
-                <!-- حقل التشخيص -->
-                <input type="text" id="diagnosis" placeholder="التشخيص">
-                <!-- حقل سنوات الخبرة (رقم) -->
-                <input type="number" id="experience" placeholder="سنوات الخبرة">
-                <!-- حقل خدمة التوصيل -->
-                <input type="text" id="delivery" placeholder="خدمة التوصيل">
+    <header class="bg-white border-b sticky top-0 z-50">
 
-                <!-- خانة اختيار (checkbox) لتحديد حالة الحذف -->
-                <div class="checkbox-box">
-                    <label>
-                        <input type="checkbox" id="deleted">
-                        تم الحذف
-                    </label>
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold text-gray-800"><?php echo $t['dashboard']; ?></h1>
+                <div class="hidden md:flex items-center gap-2 text-sm text-gray-500 <?php echo $language == 'ar' ? 'mr-4' : 'ml-4'; ?>">
+                    <span><?php echo $t['welcome']; ?></span>
+                    <span class="font-bold text-blue-600"><?php echo $_SESSION['user_name']; ?></span>
                 </div>
-
-                <!-- حقل إضافي: تم الحذف بواسطة (اختياري) -->
-                <input type="text" id="deletedBy" placeholder="تم الحذف بواسطة (اختياري)">
             </div>
 
-            <!-- زر الإضافة / التعديل -->
-            <button class="add-btn" onclick="addItem()">إضافة</button>
+            <div class="flex items-center gap-3">
+                <!-- Language Switcher -->
+                <a href="?lang=<?php echo $language == 'ar' ? 'en' : 'ar'; ?>" class="text-sm font-bold text-gray-600 hover:text-blue-600 px-2">
+                    <?php echo $language == 'ar' ? 'English' : 'العربية'; ?>
+                </a>
 
+                <?php if (count($todaysVisits) > 0): ?>
+
+                    <div class="relative cursor-pointer group" onclick="toggleNotifications()">
+                        <div class="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-all">
+                            <i class="fa-solid fa-bell text-gray-600"></i>
+                        </div>
+                        <span id="notif-count" class="notification-badge"><?php echo count($todaysVisits); ?></span>
+
+                        <div id="notif-dropdown" class="hidden absolute <?php echo $language == 'ar' ? 'left-0' : 'right-0'; ?> mt-3 w-80 bg-white rounded-xl shadow-xl border overflow-hidden">
+                            <div class="p-4 bg-gray-50 border-b font-bold flex justify-between items-center">
+                                <span><?php echo $t['notifications']; ?></span>
+                                <span class="text-xs text-blue-500 cursor-pointer"><?php echo $t['clear_all']; ?></span>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto" id="notification-list">
+                                <?php foreach ($todaysVisits as $visit): ?>
+                                    <div class="p-4 border-b hover:bg-gray-50 transition-all">
+                                        <div class="text-sm font-medium"><?php echo $visit['patient_name']; ?></div>
+                                        <div class="text-xs text-gray-500"><?php echo $visit['diagnosis']; ?> - <?php echo (new DateTime($visit['visit_time']))->format('H:i'); ?></div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <a href="../logout.php?lang=<?php echo $language ?>" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition-all"><?php echo $t['logout']; ?></a>
+            </div>
         </div>
+    </header>
 
-        <!-- قسم الجدول لعرض البيانات -->
-        <div class="table-section">
-            <table>
-                <!-- رأس الجدول يحتوي على أسماء الأعمدة -->
-                <thead>
-                    <tr>
-                        <th>الاسم</th>
-                        <th>رقم الهاتف</th>
-                        <th>وردية العمل</th>
-                        <th>الجنس</th>
-                        <th>التشخيص</th>
-                        <th>سنوات الخبرة</th>
-                        <th>خدمة التوصيل</th>
-                        <th>تم الحذف</th>
-                        <th>تم الحذف بواسطة</th>
-                        <th>تحكم</th> <!-- أزرار التعديل والحذف -->
-                    </tr>
-                </thead>
-                <!-- جسم الجدول سيتم ملؤه بواسطة JavaScript -->
-                <tbody id="tableBody"></tbody>
-            </table>
-        </div>
+    <div class="max-w-7xl mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
+        <aside class="lg:w-64 flex-shrink-0">
+            <nav class="flex flex-col gap-2 sticky top-24">
+                <a href="../index.php?lang=<?php echo $language ?>" class="logo" style="display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 12px; font-weight: bold; color: #4ade80;">
+                    <img width="64" src="../images/new-logo.jpeg" alt="Sehatak Logo" />
+                </a>
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn nav-item-active flex items-center gap-3 p-3 rounded-xl font-medium transition-all">
+                    <i class="fa-solid fa-chart-line w-5"></i> <?php echo $t['dashboard']; ?>
+                </button>
+                <button onclick="switchTab('reservations')" id="btn-reservations" class="nav-btn hover:bg-white flex items-center gap-3 p-3 rounded-xl text-gray-600 font-medium transition-all">
+                    <i class="fa-solid fa-calendar-day w-5"></i> <?php echo $t['my_reservations']; ?>
+                </button>
+                <?php if ($_SESSION['user_type'] == 'doctor') : ?>
+                    <button onclick="switchTab('settings')" id="btn-settings" class="nav-btn hover:bg-white flex items-center gap-3 p-3 rounded-xl text-gray-600 font-medium transition-all">
+                        <i class="fa-solid fa-house-medical w-5"></i> <?php echo $t['clinic_settings']; ?>
+                    </button>
+                <?php endif; ?>
+                <button onclick="switchTab('profile')" id="btn-profile" class="nav-btn hover:bg-white flex items-center gap-3 p-3 rounded-xl text-gray-600 font-medium transition-all">
+                    <i class="fa-solid fa-user-doctor w-5"></i> <?php echo $t['profile']; ?>
+                </button>
+            </nav>
+        </aside>
 
+        <main class="flex-grow">
+            <!-- Dashboard View -->
+            <div id="tab-dashboard" class="tab-content">
+                <div class="bg-white rounded-2xl custom-shadow overflow-hidden">
+                    <div class="p-6 border-b flex justify-between items-center">
+                        <h2 class="text-lg font-bold"><?php echo $t['current_records']; ?></h2>
+                        <input type="text" placeholder="<?php echo $t['search']; ?>" class="text-sm p-2 border rounded-lg bg-gray-50">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full <?php echo $language == 'ar' ? 'text-right' : 'text-left'; ?>">
+                            <thead class="bg-gray-50 border-b text-gray-600">
+                                <tr>
+                                    <th class="p-4 font-semibold text-sm"><?php echo $t['name']; ?></th>
+                                    <th class="p-4 font-semibold text-sm"><?php echo $t['phone']; ?></th>
+                                    <th class="p-4 font-semibold text-sm"><?php echo $t['diagnosis']; ?></th>
+                                    <th class="p-4 font-semibold text-sm"><?php echo $t['time']; ?></th>
+                                    <th class="p-4 font-semibold text-sm"><?php echo $t['control']; ?></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                <?php foreach ($visits as $visit): ?>
+                                    <tr class="hover:bg-gray-50 transition-all">
+                                        <td class="p-4 text-sm font-medium"><?php echo $visit['patient_name']; ?></td>
+                                        <td class="p-4 text-sm text-gray-500"><?php echo $visit['patient_phone']; ?></td>
+                                        <td class="p-4 text-sm"><?php echo $visit['diagnosis']; ?></td>
+                                        <td class="p-4 text-sm"><?php echo $visit['visit_time']; ?></td>
+                                        <td class="p-4 text-sm">
+                                            <div class="flex gap-2">
+                                                <button class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><i class="fa-solid fa-pen-to-square"></i></button>
+                                                <button class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reservations Tab -->
+            <div id="tab-reservations" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- Summary Stats for Reservations -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-blue-500 p-6 rounded-2xl text-white shadow-lg">
+                            <p class="text-blue-100 text-sm font-medium"><?php echo $t['upcoming_today']; ?></p>
+                            <h3 class="text-3xl font-bold mt-1"><?php echo count($todaysVisits); ?></h3>
+                        </div>
+                    </div>
+
+                    <!-- Today's Detailed List -->
+                    <div class="bg-white rounded-2xl custom-shadow overflow-hidden">
+                        <div class="p-6 border-b">
+                            <h2 class="text-lg font-bold flex items-center gap-2">
+                                <i class="fa-solid fa-clock text-blue-500"></i>
+                                <?php echo $t['upcoming_today']; ?>
+                            </h2>
+                        </div>
+
+                        <div class="p-6">
+                            <?php if (empty($todaysVisits)): ?>
+                                <div class="text-center py-12">
+                                    <i class="fa-solid fa-calendar-check text-4xl text-gray-200 mb-3"></i>
+                                    <p class="text-gray-500"><?php echo $t['no_visits']; ?></p>
+                                </div>
+                            <?php else: ?>
+                                <div class="space-y-4">
+                                    <?php foreach ($todaysVisits as $visit): ?>
+                                        <div class="flex items-center justify-between p-4 border rounded-xl hover:border-blue-200 hover:bg-blue-50 transition-all">
+                                            <div class="flex items-center gap-4">
+                                                <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                                                    <?php echo mb_substr($visit['patient_name'], 0, 1, 'utf-8'); ?>
+                                                </div>
+                                                <div>
+                                                    <h4 class="font-bold text-gray-800"><?php echo $visit['patient_name']; ?></h4>
+                                                    <p class="text-sm text-gray-500"><?php echo $visit['patient_phone']; ?></p>
+                                                </div>
+                                            </div>
+                                            <div class="<?php echo $language == 'ar' ? 'text-left' : 'text-right'; ?>">
+                                                <span class="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                                                    <?php echo date('h:i A', strtotime($visit['visit_time'])); ?>
+                                                </span>
+                                                <p class="text-xs text-gray-400 mt-1"><?php echo $visit['diagnosis']; ?></p>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings / Clinic Tab -->
+            <div id="tab-settings" class="tab-content hidden">
+                <div class="bg-white rounded-2xl custom-shadow overflow-hidden">
+                    <div class="p-8 text-center bg-white border-b">
+                        <h2 class="text-2xl font-bold text-gray-800 mt-4"><?php echo $_SESSION['user_name']; ?></h2>
+                        <span class="inline-block mt-2 bg-blue-50 text-blue-600 px-6 py-1 rounded-full text-sm font-bold"><?php echo $t['specialist']; ?></span>
+                    </div>
+
+                    <div class="p-8 space-y-6 max-w-2xl mx-auto">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between py-3 border-b border-gray-50">
+                                <span class="text-gray-600 font-medium"><?php echo $t['phone']; ?> :</span>
+                                <span class="text-blue-900 font-bold tracking-wider">01008730718</span>
+                            </div>
+                            <div class="flex items-center justify-between py-3 border-b border-gray-50">
+                                <span class="text-gray-600 font-medium"><?php echo $t['address']; ?> :</span>
+                                <span class="text-gray-700">Cairo</span>
+                            </div>
+                            <div class="flex items-center justify-between py-3 border-b border-gray-50">
+                                <span class="text-gray-600 font-medium"><?php echo $t['exp']; ?> :</span>
+                                <span class="text-gray-700">4 <?php echo $t['years']; ?></span>
+                            </div>
+                            <div class="flex items-center justify-between py-3 border-b border-gray-50">
+                                <span class="text-gray-600 font-medium"><?php echo $t['fees']; ?> :</span>
+                                <span class="bg-green-100 text-green-700 px-3 py-1 rounded-lg font-bold">500 <?php echo $t['currency']; ?></span>
+                            </div>
+                        </div>
+                        <div class="pt-6 flex gap-3">
+                            <button class="flex-grow bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all"><?php echo $t['edit_data']; ?></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div id="tab-profile" class="tab-content hidden">
+                <div class="bg-white rounded-2xl custom-shadow p-8">
+                    <h2 class="text-xl font-bold mb-8 flex items-center gap-2">
+                        <i class="fa-solid fa-id-card text-blue-500"></i> <?php echo $t['account_data']; ?>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-sm font-bold text-gray-700"><?php echo $t['email']; ?></label>
+                            <input type="email" value="<?php echo $_SESSION['user_email']; ?>" class="w-full p-3 bg-gray-50 border rounded-xl">
+                        </div>
+                        <div class="space-y-2 md:col-span-2">
+                            <label class="text-sm font-bold text-gray-700"><?php echo $t['bio']; ?></label>
+                            <textarea rows="4" class="w-full p-3 bg-gray-50 border rounded-xl"></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <button class="bg-gray-800 text-white px-8 py-3 rounded-xl font-bold hover:bg-black transition-all"><?php echo $t['save']; ?></button>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <!-- كود JavaScript الخاص بالصفحة -->
     <script>
-        // متغير لتحديد ما إذا كنا في وضع التعديل (يحمل index العنصر الجاري تعديله)
-        let editIndex = null;
+        function toggleNotifications() {
+            document.getElementById('notif-dropdown').classList.toggle('hidden');
+        }
 
-        // دالة تحميل وعرض البيانات من localStorage إلى الجدول
-        function loadData() {
-            // جلب البيانات من localStorage، إذا لم توجد نستخدم مصفوفة فارغة
-            let data = JSON.parse(localStorage.getItem("doctorData")) || [];
-            let table = document.getElementById("tableBody");
-            table.innerHTML = ""; // تفريغ الجدول قبل إعادة البناء
-
-            // المرور على كل عنصر في البيانات وإنشاء صف (row) جديد
-            data.forEach((item, index) => {
-                // إضافة صف للجدول، مع إضافة كلاس deleted-row إذا كان العنصر محذوفاً
-                table.innerHTML += `
-                <tr class="${item.deleted ? 'deleted-row' : ''}">
-                    <td>${item.name}</td>
-                    <td>${item.phone}</td>
-                    <td>${item.shift}</td>
-                    <td>${item.gender}</td>
-                    <td>${item.diagnosis}</td>
-                    <td>${item.experience}</td>
-                    <td>${item.delivery}</td>
-                    <td>${item.deleted ? "✔" : "✖"}</td>   <!-- علامة صح أو خطأ -->
-                    <td>${item.deletedBy || ""}</td>        <!-- عرض اسم من حذف (إن وجد) -->
-                    <td>
-                        <button class="edit" onclick="editItem(${index})">تعديل</button>
-                        <button class="delete" onclick="deleteItem(${index})">حذف</button>
-                    </td>
-                </tr>`;
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('nav-item-active');
+                btn.classList.add('text-gray-600', 'hover:bg-white');
             });
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.add('nav-item-active');
+            activeBtn.classList.remove('text-gray-600', 'hover:bg-white');
         }
-
-        // دالة إضافة عنصر جديد أو تحديث عنصر موجود (حسب قيمة editIndex)
-        function addItem() {
-            // قراءة القيم من حقول الإدخال
-            let name = document.getElementById("name").value;
-            let phone = document.getElementById("phone").value;
-            let shift = document.getElementById("shift").value;
-            let gender = document.getElementById("gender").value;
-            let diagnosis = document.getElementById("diagnosis").value;
-            let experience = document.getElementById("experience").value;
-            let delivery = document.getElementById("delivery").value;
-            let deleted = document.getElementById("deleted").checked; // boolean
-            let deletedBy = document.getElementById("deletedBy").value;
-
-            // التحقق من إدخال الاسم (حقل إلزامي)
-            if (name === "") return alert("من فضلك ادخل الاسم");
-
-            // جلب البيانات الموجودة
-            let data = JSON.parse(localStorage.getItem("doctorData")) || [];
-
-            // إنشاء كائن العنصر الجديد
-            let newItem = {
-                name,
-                phone,
-                shift,
-                gender,
-                diagnosis,
-                experience,
-                delivery,
-                deleted,
-                deletedBy
-            };
-
-            // إذا كان editIndex = null فهذا معناه إضافة جديدة، وإلا تعديل على العنصر ذي index المحدد
-            if (editIndex === null) {
-                data.push(newItem); // إضافة للقائمة
-            } else {
-                data[editIndex] = newItem; // استبدال العنصر القديم
-                editIndex = null; // إعادة تعيين المتغير بعد التعديل
-            }
-
-            // حفظ المصفوفة في localStorage
-            localStorage.setItem("doctorData", JSON.stringify(data));
-
-            // تفريغ الحقول بعد الإضافة/التعديل
-            clearFields();
-
-            // إعادة تحميل الجدول
-            loadData();
-        }
-
-        // دالة تعديل عنصر: تملأ الحقول ببيانات العنصر المختار
-        function editItem(index) {
-            let data = JSON.parse(localStorage.getItem("doctorData"));
-            let item = data[index];
-
-            // وضع القيم في حقول الإدخال
-            document.getElementById("name").value = item.name;
-            document.getElementById("phone").value = item.phone;
-            document.getElementById("shift").value = item.shift;
-            document.getElementById("gender").value = item.gender;
-            document.getElementById("diagnosis").value = item.diagnosis;
-            document.getElementById("experience").value = item.experience;
-            document.getElementById("delivery").value = item.delivery;
-            document.getElementById("deleted").checked = item.deleted;
-            document.getElementById("deletedBy").value = item.deletedBy;
-
-            // تخزين index العنصر الذي يتم تعديله
-            editIndex = index;
-        }
-
-        // دالة حذف عنصر نهائياً من المصفوفة
-        function deleteItem(index) {
-            let data = JSON.parse(localStorage.getItem("doctorData"));
-            data.splice(index, 1); // إزالة العنصر بال index المحدد
-            localStorage.setItem("doctorData", JSON.stringify(data)); // حفظ التغييرات
-            loadData(); // إعادة تحميل الجدول
-        }
-
-        // دالة تفريغ جميع حقول الإدخال (النصية و checkbox)
-        function clearFields() {
-            // اختيار جميع المدخلات داخل .form-grid
-            document.querySelectorAll(".form-grid input").forEach(input => {
-                if (input.type === "checkbox") {
-                    input.checked = false; // إلغاء تحديد checkbox
-                } else {
-                    input.value = ""; // تفريغ الحقول النصية
-                }
-            });
-        }
-
-        // عند تحميل الصفحة، قم بتحميل البيانات وعرضها
-        window.onload = loadData;
     </script>
-
 </body>
 
 </html>

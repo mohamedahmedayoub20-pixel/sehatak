@@ -1,10 +1,70 @@
 <?php
 include "../includes/auth.php";
+include "../includes/database.php";
 
 $language = "ar";
 if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'ar'])) {
     $language = $_GET['lang'];
 }
+
+$error = "";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['action'] === 'book-visit') {
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'message' => 'User session not found.']);
+        exit;
+    }
+
+    $userId = $_SESSION['user_id'];
+    $labId = $_POST['lab_id'];
+    $currentDate = date('Y-m-d');
+    $fullTimestamp = date('Y-m-d H:i:s');
+
+    try {
+        $patientStmt = $pdo->prepare("SELECT patient_id FROM patient WHERE user_id = ?");
+        $patientStmt->execute([$userId]);
+        $patient = $patientStmt->fetch();
+
+        if (!$patient) {
+            $userStmt = $pdo->prepare("SELECT name FROM user WHERE user_id = ?");
+            $userStmt->execute([$userId]);
+            $userName = ($u = $userStmt->fetch()) ? $u['name'] : 'New Patient';
+
+            $insPatient = $pdo->prepare("INSERT INTO patient (user_id, name, deleted) VALUES (?, ?, '0')");
+            $insPatient->execute([$userId, $userName]);
+            $patientId = $pdo->lastInsertId();
+        } else {
+            $patientId = $patient['patient_id'];
+        }
+
+        $checkVisit = $pdo->prepare("SELECT COUNT(*) FROM `visiting the analysis laboratory` 
+                                    WHERE patient_id = ? AND DATE(visit_time) = ? AND is_deleted = 0");
+        $checkVisit->execute([$patientId, $currentDate]);
+
+        if ($checkVisit->fetchColumn() > 0) {
+            $error =  'لديك زيارة مستقبلة مسجلة بالفعل !. لا يمكنك حجز أكثر من زيارة في نفس الوقت.';
+        } else {
+            $insertVisit = $pdo->prepare("INSERT INTO `visiting the analysis laboratory` (type_of_analysis, status_of_analysis, patient_id, analysis_laboratory_id, visit_time) VALUES (?, ?, ?, ?, ?)");
+
+            $result = $insertVisit->execute(['CBC', 'Routine', $patientId, $labId, $fullTimestamp]);
+
+            $error = 'تم إرسال طلب الحجز لمعمل التحاليل بنجاح! سيتواصل معك فريق المختبر فوراً.';
+        }
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'message' => 'Database Error: ' . $e->getMessage()]);
+    }
+}
+
+
+$labsQuery = $pdo->prepare("SELECT 
+             `analysis laboratory`.`analysis_laboratory_id` as  `lab_id`,
+             `analysis laboratory`.`name` AS `name`,
+             `analysis laboratory`.`address` AS `address`
+         FROM `analysis laboratory`");
+
+$labsQuery->execute();
+$labs = $labsQuery->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 
 <!DOCTYPE html>
@@ -91,243 +151,44 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'ar'])) {
             </div>
         </section>
 
+        <?php if (isset($error) && !empty($error)): ?>
+            <div class="card" style="background: #f8d7da; color: #721c24; margin-bottom: 20px;">
+                <?php echo htmlspecialchars($error); ?>
+            </div>
+        <?php endif; ?>
         <!-- شبكة بطاقات التحاليل -->
         <div class="analysis-grid" id="analysisGrid">
+
+
+            <?php foreach ($labs as $lab) : ?>
+
+                <article class="analysis-card" data-category="الدم">
+                    <div class="card-top">
+                        <div class="card-icon-box">🧪</div>
+                        <div class="card-title-info">
+                            <h3><?php echo $lab['name']; ?></h3>
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        <span class="badge">تحاليل الدم</span>
+                        <div class="detail-item">📍 <?php echo $lab['address']; ?></div>
+                        <div class="detail-item">⏱️ مدة التحليل: 24 ساعة</div>
+                    </div>
+                    <div class="card-action">
+
+                        <form method="POST" style="display: inline;">
+                            <input type="hidden" name="action" value="book-visit">
+                            <input type="hidden" name="lab_id" value="<?php echo $lab['lab_id']; ?>">
+                            <button type="submit" class="book-btn">احجز الآن</button>
+                        </form>
+                        <span class="price">150 جنيه</span>
+                    </div>
+                </article>
+
+            <?php endforeach; ?>
+
             <!-- بطاقة 1: صورة دم كاملة (CBC) -->
-            <article class="analysis-card" data-category="الدم">
-                <div class="card-top">
-                    <div class="card-icon-box">🧪</div>
-                    <div class="card-title-info">
-                        <h3>تحليل صورة دم كاملة (CBC)</h3>
-                        <p>قياس مستويات خلايا الدم الحمراء والبيضاء والصفائح الدموية</p>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <span class="badge">تحاليل الدم</span>
-                    <div class="detail-item">📍 معامل المختبر - القاهرة، مصر الجديدة</div>
-                    <div class="detail-item">⏱️ مدة التحليل: 24 ساعة</div>
-                </div>
-                <div class="card-action">
-                    <button class="book-btn" onclick="bookAnalysis('صورة دم كاملة')">احجز الآن</button>
-                    <span class="price">150 جنيه</span>
-                </div>
-            </article>
 
-            <!-- بطاقة 2: السكر التراكمي -->
-            <article class="analysis-card" data-category="السكر">
-                <div class="card-top">
-                    <div class="card-icon-box">🧪</div>
-                    <div class="card-title-info">
-                        <h3>تحليل السكر التراكمي (HbA1c)</h3>
-                        <p>قياس متوسط مستوى السكر في الدم خلال 3 شهور</p>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <span class="badge">تحاليل السكر</span>
-                    <div class="detail-item">📍 معامل البرج - الإسكندرية، سموحة</div>
-                    <div class="detail-item">⏱️ مدة التحليل: 3 ساعات</div>
-                </div>
-                <div class="card-action">
-                    <button class="book-btn" onclick="bookAnalysis('السكر التراكمي')">احجز الآن</button>
-                    <span class="price">200 جنيه</span>
-                </div>
-            </article>
-
-            <!-- بطاقة 3: وظائف الكلى -->
-            <article class="analysis-card" data-category="الكلى">
-                <div class="card-top">
-                    <div class="card-icon-box">🧪</div>
-                    <div class="card-title-info">
-                        <h3>تحليل وظائف الكلى</h3>
-                        <p>فحص شامل لوظائف الكلى والكرياتينين واليوريا</p>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <span class="badge">تحاليل الكلى</span>
-                    <div class="detail-item">📍 معامل الفا - الجيزة، المهندسين</div>
-                    <div class="detail-item">⏱️ مدة التحليل: 6 ساعات</div>
-                </div>
-                <div class="card-action">
-                    <button class="book-btn" onclick="bookAnalysis('وظائف الكلى')">احجز الآن</button>
-                    <span class="price">180 جنيه</span>
-                </div>
-            </article>
-
-            <!-- بطاقة 4: وظائف الكبد -->
-            <article class="analysis-card" data-category="الكبد">
-                <div class="card-top">
-                    <div class="card-icon-box">🧪</div>
-                    <div class="card-title-info">
-                        <h3>تحليل وظائف الكبد</h3>
-                        <p>فحص إنزيمات الكبد والبيليروبين والبروتين</p>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <span class="badge">تحاليل الكبد</span>
-                    <div class="detail-item">📍 معامل الحكمة - القاهرة، مدينة نصر</div>
-                    <div class="detail-item">⏱️ مدة التحليل: 12 ساعة</div>
-                </div>
-                <div class="card-action">
-                    <button class="book-btn" onclick="bookAnalysis('وظائف الكبد')">احجز الآن</button>
-                    <span class="price">250 جنيه</span>
-                </div>
-            </article>
-
-            <!-- بطاقة 5: الغدة الدرقية -->
-            <article class="analysis-card" data-category="الهرمونات">
-                <div class="card-top">
-                    <div class="card-icon-box">🧪</div>
-                    <div class="card-title-info">
-                        <h3>تحليل الغدة الدرقية (TSH)</h3>
-                        <p>قياس هرمون الغدة الدرقية المحفز</p>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <span class="badge">تحاليل الهرمونات</span>
-                    <div class="detail-item">📍 معامل كايرو لاب - طنطا، وسط البلد</div>
-                    <div class="detail-item">⏱️ مدة التحليل: 24 ساعة</div>
-                </div>
-                <div class="card-action">
-                    <button class="book-btn" onclick="bookAnalysis('الغدة الدرقية')">احجز الآن</button>
-                    <span class="price">170 جنيه</span>
-                </div>
-            </article>
-
-            <!-- بطاقة 6: فيتامين د -->
-            <article class="analysis-card" data-category="الفيتامينات">
-                <div class="card-top">
-                    <div class="card-icon-box">🧪</div>
-                    <div class="card-title-info">
-                        <h3>تحليل فيتامين د</h3>
-                        <p>قياس مستوى فيتامين د في الدم</p>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <span class="badge">تحاليل الفيتامينات</span>
-                    <div class="detail-item">📍 معامل البرج - الإسكندرية، ميامي</div>
-                    <div class="detail-item">⏱️ مدة التحليل: 48 ساعة</div>
-                </div>
-                <div class="card-action">
-                    <button class="book-btn" onclick="bookAnalysis('فيتامين د')">احجز الآن</button>
-                    <span class="price">250 جنيه</span>
-                </div>
-            </article>
-
-            <!-- بطاقة 7: كورونا PCR -->
-            <article class="analysis-card" data-category="الفيروسات">
-                <div class="card-top">
-                    <div class="card-icon-box">🧪</div>
-                    <div class="card-title-info">
-                        <h3>تحليل كورونا PCR</h3>
-                        <p>الكشف عن فيروس كورونا المستجد</p>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <span class="badge">تحاليل الفيروسات</span>
-                    <div class="detail-item">📍 معامل المختبر - القاهرة، الزمالك</div>
-                    <div class="detail-item">⏱️ مدة التحليل: 6 ساعات</div>
-                </div>
-                <div class="card-action">
-                    <button class="book-btn" onclick="bookAnalysis('كورونا PCR')">احجز الآن</button>
-                    <span class="price">300 جنيه</span>
-                </div>
-            </article>
-
-            <!-- بطاقة 8: الكوليسترول الكامل -->
-            <article class="analysis-card" data-category="الدهون">
-                <div class="card-top">
-                    <div class="card-icon-box">🧪</div>
-                    <div class="card-title-info">
-                        <h3>تحليل الكوليسترول الكامل</h3>
-                        <p>قياس مستويات الكوليسترول والدهون الثلاثية</p>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <span class="badge">تحاليل الدهون</span>
-                    <div class="detail-item">📍 معامل الفا - المنصورة، الجلاء</div>
-                    <div class="detail-item">⏱️ مدة التحليل: 12 ساعة</div>
-                </div>
-                <div class="card-action">
-                    <button class="book-btn" onclick="bookAnalysis('الكوليسترول الكامل')">احجز الآن</button>
-                    <span class="price">190 جنيه</span>
-                </div>
-            </article>
-            <!-- بطاقة 9:  الحديد -->
-            <article class="analysis-card" data-category="الحديد">
-                <div class="card-top">
-                    <div class="card-icon-box">🧪</div>
-                    <div class="card-title-info">
-                        <h3>تحليل الحديد </h3>
-                        <p>قياس مستوي الحديد في الدم للكشف عن الانيميا</p>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <span class="badge">تحاليل الحديد</span>
-                    <div class="detail-item">📍 معامل الفا - المنصورة، الجلاء</div>
-                    <div class="detail-item">⏱️ مدة التحليل: 12 ساعة</div>
-                </div>
-                <div class="card-action">
-                    <button class="book-btn" onclick="bookAnalysis('الحديد')">احجز الآن</button>
-                    <span class="price">180 جنيه</span>
-                </div>
-            </article>
-            <!-- بطاقة 10:  الكالسيوم -->
-            <article class="analysis-card" data-category="الكالسيوم">
-                <div class="card-top">
-                    <div class="card-icon-box">🧪</div>
-                    <div class="card-title-info">
-                        <h3>تحليل الكالسيوم </h3>
-                        <p>قياس مستوي الكالسيوم في الدم </p>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <span class="badge">تحاليل الكالسيوم</span>
-                    <div class="detail-item">📍 معامل الفا القاهرة - مدينة نصر </div>
-                    <div class="detail-item">⏱️ مدة التحليل: 12 ساعة</div>
-                </div>
-                <div class="card-action">
-                    <button class="book-btn" onclick="bookAnalysis('الكالسيوم')">احجز الآن</button>
-                    <span class="price">170 جنيه</span>
-                </div>
-            </article>
-            <!-- بطاقة 11:  سيولة الدم -->
-            <article class="analysis-card" data-category="سيولة الدم">
-                <div class="card-top">
-                    <div class="card-icon-box">🧪</div>
-                    <div class="card-title-info">
-                        <h3>تحليل سيولة الدم </h3>
-                        <p>قياس سرعة تجلط الدم</p>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <span class="badge">تحاليل سيولة الدم</span>
-                    <div class="detail-item">📍 معامل الفا القاهرة - مدينة نصر </div>
-                    <div class="detail-item">⏱️ مدة التحليل: 6 ساعة</div>
-                </div>
-                <div class="card-action">
-                    <button class="book-btn" onclick="bookAnalysis('سيولة الدم')">احجز الآن</button>
-                    <span class="price">160 جنيه</span>
-                </div>
-            </article>
-            <!-- بطاقة 12:   الحمل -->
-            <article class="analysis-card" data-category="الحمل">
-                <div class="card-top">
-                    <div class="card-icon-box">🧪</div>
-                    <div class="card-title-info">
-                        <h3>تحليل الحمل </h3>
-                        <p>الكشف عن وجود هرمون الحمل في الدم</p>
-                    </div>
-                </div>
-                <div class="card-details">
-                    <span class="badge">تحاليل الحمل</span>
-                    <div class="detail-item">📍 معامل الفا القاهرة - مدينة نصر </div>
-                    <div class="detail-item">⏱️ مدة التحليل: 6 ساعة</div>
-                </div>
-                <div class="card-action">
-                    <button class="book-btn" onclick="bookAnalysis('الحمل')">احجز الآن</button>
-                    <span class="price">150 جنيه</span>
-                </div>
-            </article>
         </div>
     </main>
 
