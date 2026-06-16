@@ -93,6 +93,7 @@ if ($_SESSION['user_type'] !== 'nurse' && $_SESSION['user_type'] !== 'admin') {
 $sql = "SELECT 
             `patient`.`name` AS patient_name, 
             `patient`.`phone_number` AS patient_phone,
+            `nurse`.`service_fees` AS fees,
             `nurse`.`name` AS nurse_name, 
             `visiting a nurse`.`visiting_dates`,
              `visiting a nurse`.visit_time

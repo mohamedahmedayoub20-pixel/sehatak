@@ -90,11 +90,96 @@ if ($_SESSION['user_type'] !== 'doctor' && $_SESSION['user_type'] !== 'admin') {
     exit();
 }
 
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $action = $_POST['action'];
+
+    if ($action == 'update') {
+        // document.getElementById('formAction
+        $phone = $_POST['phone'];
+        $address  = $_POST['address'];
+        $fees     = $_POST['fees'];
+        $experience = $_POST['experience'];
+
+        try {
+
+            if (!isset($phone)) {
+                $error = "phone is required";
+            }
+
+            if (!isset($address)) {
+                $error = "address is required";
+            }
+
+            if (!isset($fees)) {
+                $error = "fees is required";
+            }
+
+            if (!isset($experience)) {
+                $error = "experience is required";
+            }
+
+            if (!isset($error)) {
+
+                $stmt = $pdo->prepare("UPDATE user SET address = ? WHERE user_id = ?");
+                $result = $stmt->execute([
+                    $address,
+                    $_SESSION['user_id']
+                ]);
+
+                $stmtDoc = $pdo->prepare("UPDATE doctor SET phone_number = ?, years_of_experience = ?, service_fees = ? WHERE user_id = ?");
+                $resultDoc = $stmtDoc->execute([
+                    $phone,
+                    $experience,
+                    $fees,
+                    $_SESSION['user_id']
+                ]);
+
+                if ($result && $resultDoc) {
+                    $error = '';
+                } else {
+                    $error = "Failed to update account";
+                }
+            }
+        } catch (PDOException $e) {
+            $error = "خطأ في القاعدة: " . $e->getMessage();
+        }
+    } else {
+        $error = "Unknown action";
+    }
+}
+
+//echo $_SESSION['user_id'];
+/*if (!isset($_SESSION['user_id'])) {
+    header("Location: ../index.php?lang=" . urlencode($language));
+    exit();
+}*/
+
+$userQuery = $pdo->prepare("SELECT 
+    `doctor`.`doctor_id` AS doctor_id, 
+    `doctor`.`name` AS name, 
+    `doctor`.`service_fees` AS fees,
+    `doctor`.`phone_number` AS phone,
+    `user`.`address` AS address,
+    `doctor`.`years_of_experience` AS experience
+ FROM user
+ LEFT JOIN `doctor` ON `doctor`.`user_id` = `user`.`user_id`
+ WHERE `user`.`user_id` = :user_id");
+
+$userQuery->execute(['user_id' => $_SESSION['user_id']]);
+$user = $userQuery->fetch(PDO::FETCH_ASSOC);
+
+if (!$user) {
+    header("Location: ../index.php?lang=" . urlencode($language));
+    exit();
+}
+
 $sql = "SELECT 
             `visiting a doctor`.`diagnosis`, 
             `patient`.`name` AS patient_name, 
             `patient`.`phone_number` AS patient_phone,
             `doctor`.`name` AS doctor_name, 
+            `doctor`.`service_fees` AS doctor_fees, 
             `visiting a doctor`.`visit_time`
         FROM `visiting a doctor`
         JOIN `doctor` ON `doctor`.`doctor_id` = `visiting a doctor`.`doctor_id` 
@@ -206,6 +291,13 @@ $todaysVisits = array_filter($visits, function ($visit) {
             </div>
         </div>
     </header>
+
+
+    <?php if (isset($error) && !empty($error)): ?>
+        <div class="card" style="background: #f8d7da; color: #721c24; margin-bottom: 20px;">
+            <?php echo htmlspecialchars($error); ?>
+        </div>
+    <?php endif; ?>
 
     <div class="max-w-7xl mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
         <aside class="lg:w-64 flex-shrink-0">
@@ -336,23 +428,24 @@ $todaysVisits = array_filter($visits, function ($visit) {
                         <div class="space-y-4">
                             <div class="flex items-center justify-between py-3 border-b border-gray-50">
                                 <span class="text-gray-600 font-medium"><?php echo $t['phone']; ?> :</span>
-                                <span class="text-blue-900 font-bold tracking-wider">01008730718</span>
+                                <span class="text-blue-900 font-bold tracking-wider"><?php echo $user['phone']; ?></span>
                             </div>
                             <div class="flex items-center justify-between py-3 border-b border-gray-50">
                                 <span class="text-gray-600 font-medium"><?php echo $t['address']; ?> :</span>
-                                <span class="text-gray-700">Cairo</span>
+                                <span class="text-gray-700"><?php echo $user['address']; ?></span>
                             </div>
                             <div class="flex items-center justify-between py-3 border-b border-gray-50">
                                 <span class="text-gray-600 font-medium"><?php echo $t['exp']; ?> :</span>
-                                <span class="text-gray-700">4 <?php echo $t['years']; ?></span>
+                                <span class="text-gray-700"><?php echo $user['experience']; ?> <?php echo $t['years']; ?></span>
                             </div>
                             <div class="flex items-center justify-between py-3 border-b border-gray-50">
                                 <span class="text-gray-600 font-medium"><?php echo $t['fees']; ?> :</span>
-                                <span class="bg-green-100 text-green-700 px-3 py-1 rounded-lg font-bold">500 <?php echo $t['currency']; ?></span>
+                                <span class="bg-green-100 text-green-700 px-3 py-1 rounded-lg font-bold"><?php echo $user['fees']; ?> <?php echo $t['currency']; ?></span>
                             </div>
                         </div>
                         <div class="pt-6 flex gap-3">
-                            <button class="flex-grow bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all"><?php echo $t['edit_data']; ?></button>
+                            <button id="openModalBtn" class="flex-grow bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all"><?php echo $t['edit_data']; ?></button>
+
                         </div>
                     </div>
                 </div>
@@ -382,6 +475,98 @@ $todaysVisits = array_filter($visits, function ($visit) {
         </main>
     </div>
 
+    <!-- Update Modal Backdrop -->
+    <div id="updateModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4" dir="rtl">
+
+        <!-- Modal Card -->
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transform transition-all scale-95 opacity-0 duration-300" id="modalCard">
+
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-bold text-gray-800">تعديل البيانات الشخصية</h3>
+                <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600 focus:outline-none text-2xl font-semibold">&times;</button>
+            </div>
+
+            <!-- Modal Body (Form) -->
+            <form id="updateForm" class="p-6 space-y-4" method="POST" id="userTypeForm">
+                <input type="hidden" name="action" id="typeFormAction" value="update">
+
+                <!-- Phone Number Field -->
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف :</label>
+                    <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value="<?php echo $user['phone']; ?>"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-left"
+                        dir="ltr"
+                        required>
+                </div>
+
+                <!-- Address Field -->
+                <div>
+                    <label for="address" class="block text-sm font-medium text-gray-700 mb-1">العنوان :</label>
+                    <input
+                        type="text"
+                        id="address"
+                        name="address"
+                        value="<?php echo $user['address']; ?>"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        required>
+                </div>
+
+                <!-- Years of Experience Field -->
+                <div>
+                    <label for="experience" class="block text-sm font-medium text-gray-700 mb-1">سنوات الخبرة :</label>
+                    <div class="relative flex items-center">
+                        <input
+                            type="number"
+                            id="experience"
+                            name="experience"
+                            value="<?php echo $user['experience']; ?>"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none pl-12"
+                            min="0"
+                            required>
+                        <span class="absolute left-4 text-gray-500 text-sm pointer-events-none">سنة</span>
+                    </div>
+                </div>
+
+                <!-- Examination Fee Field -->
+                <div>
+                    <label for="fees" class="block text-sm font-medium text-gray-700 mb-1">حساب الكشف :</label>
+                    <div class="relative flex items-center">
+                        <input
+                            type="number"
+                            id="fees"
+                            name="fees"
+                            value="<?php echo $user['fees']; ?>"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none pl-14 font-semibold text-emerald-600 bg-emerald-50/30"
+                            min="0"
+                            required>
+                        <span class="absolute left-4 text-emerald-700 text-sm font-medium pointer-events-none">جنيه</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="pt-4 flex gap-3 border-t border-gray-100 mt-6">
+                    <button
+                        type="submit"
+                        class="w-full py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition duration-200 shadow-md shadow-blue-200">
+                        حفظ التعديلات
+                    </button>
+                    <button
+                        type="button"
+                        id="cancelModalBtn"
+                        class="w-1/3 py-3 bg-gray-100 text-gray-600 font-medium rounded-xl hover:bg-gray-200 transition duration-200">
+                        إلغاء
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
     <script>
         function toggleNotifications() {
             document.getElementById('notif-dropdown').classList.toggle('hidden');
@@ -398,6 +583,57 @@ $todaysVisits = array_filter($visits, function ($visit) {
             activeBtn.classList.add('nav-item-active');
             activeBtn.classList.remove('text-gray-600', 'hover:bg-white');
         }
+
+        const modal = document.getElementById('updateModal');
+        const card = document.getElementById('modalCard');
+        const openBtn = document.getElementById('openModalBtn');
+        const closeBtn = document.getElementById('closeModalBtn');
+        const cancelBtn = document.getElementById('cancelModalBtn');
+        const form = document.getElementById('updateForm');
+
+        function openModal() {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                card.classList.remove('scale-95', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            card.classList.remove('scale-100', 'opacity-100');
+            card.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); // Matches transition duration
+        }
+
+        // Event Listeners
+        openBtn.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+
+        // Close modal if user clicks outside the white card container
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Form Submission handling
+        form.addEventListener('submit', (e) => {
+            //e.preventDefault();
+
+            // Extracting data
+            const updatedData = {
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value,
+                experience: document.getElementById('experience').value,
+                fees: document.getElementById('fees').value
+            };
+
+            console.log("Saving changes: ", updatedData);
+
+            // Close modal after saving
+            closeModal();
+        });
     </script>
 </body>
 

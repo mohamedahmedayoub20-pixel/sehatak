@@ -58,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['action'] === 'book-visit') 
 $nursesQuery = $pdo->prepare("SELECT 
              `nurse`.`nurse_id`,
              `nurse`.`name` AS `name`,
+             `nurse`.`service_fees` AS fees,
              `nurse`.`phone_number` AS `phone`,
              `nurse`.`years_of_experience` AS `experience`
          FROM `nurse`");
@@ -171,7 +172,7 @@ $nurses = $nursesQuery->fetchAll(PDO::FETCH_ASSOC);
                             <p class="spec" <?php echo $nurse['phone']; ?></p>
                             <p class="rating">⭐ 4.9 <span class="rev-count">(156 تقييم)</span></p>
                             <p class="meta">📍 القاهرة، مصر الجديدة | 🕒 <?php echo $nurse['experience']; ?> سنوات</p>
-                            <p class="price-status">● متاح الآن <span class="price">80 جنيه</span></p>
+                            <p class="price-status">● متاح الآن <span class="price"><?php echo $nurse['fees']; ?> جنيه</span></p>
                         </div>
                         <div class="actions-side">
                             <?php /*<button class="btn-book" onclick="bookNow('فاطمة احمد حسن')">احجز الآن</button>*/ ?>

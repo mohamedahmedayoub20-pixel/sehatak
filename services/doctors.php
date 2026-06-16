@@ -91,7 +91,7 @@ $specQuery = $pdo->prepare("SELECT DISTINCT specialization FROM doctor");
 $specQuery->execute();
 $specializations = $specQuery->fetchAll(PDO::FETCH_ASSOC);
 
-$doctorsQuery = $pdo->prepare("SELECT doctor_id, name,specialization, phone_number,work_shift, gender, years_of_experience,delivery_service, deleted, deleted_by, user_id,
+$doctorsQuery = $pdo->prepare("SELECT doctor_id, name, service_fees,specialization, phone_number,work_shift, gender, years_of_experience,delivery_service, deleted, deleted_by, user_id,
 (SELECT address from user where user.user_id = doctor.user_id) as 'address'
 FROM doctor WHERE deleted = 0");
 $doctorsQuery->execute();
@@ -151,7 +151,7 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
                         <a href="logout.php?lang=<?php echo $language ?>" class="btn btn-logout">تسجيل الخروج</a>
                     <?php else: ?>
                         <a href="#" class="btn btn-guest">تصفح الموقع</a>
-                        <a href="login.php?lang=<?php echo $language ?>" class="btn btn-login">دخول المرضى</a>
+                        <a href="../login.php?lang=<?php echo $language ?>" class="btn btn-login">دخول المرضى</a>
                     <?php endif; ?>
                 </div>
             </header>
@@ -203,7 +203,7 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
                                 <p class="spec"><?php echo $doc['specialization']; ?></p>
                                 <p class="rating">⭐ 4.9 <span class="rev-count">(127 تقييم)</span></p>
                                 <p class="meta">📍 <?php echo $doc['address']; ?> | 🕒 <?php echo $doc['years_of_experience']; ?> سنة خبرة</p>
-                                <p class="price-status">● <?php echo $doc['delivery_service']; ?> <span class="price">500 جنيه</span></p>
+                                <p class="price-status">● <?php echo $doc['delivery_service']; ?> <span class="price"><?php echo $doc['service_fees']; ?> جنيه</span></p>
                             </div>
                             <div class="actions-side">
 
@@ -226,6 +226,7 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
                                 <button class="btn-profile" onclick="viewProfile(
                                 <?php echo $doc['doctor_id']; ?>,
                                 '<?php echo addslashes($doc['name']); ?>',
+                                <?php echo $doc['service_fees']; ?>,
                                 '<?php echo $doc['specialization']; ?>',
                                 '<?php echo $doc['phone_number']; ?>',
                                 '<?php echo addslashes($doc['address']); ?>',
@@ -317,7 +318,7 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
                                 <p class="spec"><?php echo $doc['specialization']; ?></p>
                                 <p class="rating">⭐ 4.9 <span class="rev-count">(127 تقييم)</span></p>
                                 <p class="meta">📍 <?php echo $doc['address']; ?> | 🕒 <?php echo $doc['years_of_experience']; ?> سنة خبرة</p>
-                                <p class="price-status">● <?php echo $doc['delivery_service']; ?> <span class="price">500 جنيه</span></p>
+                                <p class="price-status">● <?php echo $doc['delivery_service']; ?> <span class="price"><?php echo $doc['service_fees']; ?> جنيه</span></p>
                             </div>
                             <div class="actions-side">
 
@@ -336,6 +337,7 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
                                 <button class="btn-profile" onclick="viewProfile(
                                 <?php echo $doc['doctor_id']; ?>,
                                 '<?php echo addslashes($doc['name']); ?>',
+                                <?php echo $doc['service_fees']; ?>,
                                 '<?php echo $doc['specialization']; ?>',
                                 '<?php echo $doc['phone_number']; ?>',
                                 '<?php echo addslashes($doc['address']); ?>',
@@ -426,7 +428,7 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
 
     <!-- كود الجافا سكريبت (الوظائف الأساسية + البوت) -->
     <script>
-        function viewProfile(id, name, specialty, phone, address, experience, image, shift) {
+        function viewProfile(id, name, service_fees, specialty, phone, address, experience, image, shift) {
             // 1. إخفاء الصفحة الرئيسية وإظهار صفحة البروفايل
             document.getElementById('homePage').style.display = 'none';
             document.getElementById('profilePage').style.display = 'block';
@@ -461,7 +463,7 @@ $doctors = $doctorsQuery->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                     <div class="info-row">
                         <span class="info-label">حساب الكشف :</span>
-                        <span class="info-value price">500 جنيه</span>
+                        <span class="info-value price">${service_fees} جنيه</span>
                     </div>
                 </div>
         
